@@ -1,6 +1,8 @@
 'use client';
 
 import React, { useState } from 'react';
+import { listenForProgress } from '@/lib/progressService';
+import UnsplashImageSelector from './UnsplashImageSelector';
 import SubjectGradeSelector from './SubjectGradeSelector';
 import ScopeSequenceSuggestion from './ScopeSequenceSuggestion';
 import { Send, Loader2, Download, Eye, Sparkles, BookOpen, Heart, Target, Clock, FileText } from 'lucide-react';
@@ -33,6 +35,7 @@ interface WorksheetGeneratorProps {
 
 
 export default function WorksheetGenerator({ customization }: WorksheetGeneratorProps) {
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [prompt, setPrompt] = useState('');
   const [result, setResult] = useState<WorksheetResult | null>(null);
   const [loading, setLoading] = useState(false);
@@ -51,42 +54,37 @@ export default function WorksheetGenerator({ customization }: WorksheetGenerator
     setResult(null);
     setProgress(0);
 
-    // Progress simulation
-    const progressInterval = setInterval(() => {
-      setProgress(prev => {
-        if (prev >= 90) return prev;
-        return prev + Math.random() * 15;
-      });
-    }, 500);
-
     try {
       const requestData = {
         prompt,
         ...customization
       };
-
-      const res = await fetch('/api/generate-advanced', {
+      const res = await fetch('/api/generate-worksheet', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(requestData),
       });
-      
-      if (!res.ok) throw new Error('Failed to generate worksheet');
-      
-      const data = await res.json();
-      setProgress(100);
-      setTimeout(() => {
-        setResult(data);
-        clearInterval(progressInterval);
-      }, 500);
+      if (!res.ok) throw new Error('Failed to start worksheet generation');
+      const { jobId } = await res.json();
+      listenForProgress(jobId, (progress) => {
+        setProgress(progress.percentage);
+        if (progress.percentage === 100) {
+          if (progress.message.startsWith('Error')) {
+            setError(progress.message);
+            setLoading(false);
+          } else {
+            fetch(`/api/generate-worksheet?jobId=${encodeURIComponent(jobId)}`)
+              .then(r => r.json())
+              .then(data => {
+                setResult(data.worksheet);
+                setLoading(false);
+              });
+          }
+        }
+      });
     } catch (err: any) {
-      clearInterval(progressInterval);
       setError(err.message || 'An error occurred while generating your worksheet');
-    } finally {
-      setTimeout(() => {
-        setLoading(false);
-        setProgress(0);
-      }, 600);
+      setLoading(false);
     }
   }
 
@@ -235,6 +233,20 @@ export default function WorksheetGenerator({ customization }: WorksheetGenerator
       {/* Results */}
       {result && (
         <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-lg animate-fade-in min-w-0 max-w-full">
+          {/* Unsplash Image Selector for higher-level/stock images */}
+          <div className="mb-6">
+            <h4 className="text-lg font-semibold text-gray-900 mb-2 flex items-center gap-2">
+              Add a Stock Image (Unsplash)
+              <span className="text-xs text-gray-400" title="Use a real-world photo for history, science, ELA, or when a stock image is better than a generated one.">(info)</span>
+            </h4>
+            <UnsplashImageSelector onSelect={setSelectedImage} />
+            {selectedImage && (
+              <div className="mt-2">
+                <img src={selectedImage} alt="Selected Unsplash" className="w-full max-h-64 object-contain rounded-xl border" />
+                <div className="text-xs text-gray-500 mt-1">This image will be included as a stock photo for your worksheet.</div>
+              </div>
+            )}
+          </div>
           {/* Header */}
           <div className="bg-gradient-to-r from-amber-50 to-orange-50 p-6 border-b border-gray-200">
             <div className="flex items-center justify-between mb-4">
