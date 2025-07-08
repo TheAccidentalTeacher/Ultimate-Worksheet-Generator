@@ -88,7 +88,22 @@ export default function ColoringSheetGenerator({ theme, ageGroup, faithLevel }: 
             pageIndex: i,
           },
         ]);
-        const imageUrl = await generateColoringImage(prompt);
+        let imageUrl = null;
+        try {
+          imageUrl = await generateColoringImage(prompt);
+        } catch (err: any) {
+          setError('AI image generation failed. Please check your Replicate API key or try again later.');
+        }
+        if (!imageUrl) {
+          // Fallback: use Unsplash as a backup (optional, can be improved)
+          try {
+            const res = await fetch(`/api/unsplash?query=${encodeURIComponent(prompt)}`);
+            if (res.ok) {
+              const data = await res.json();
+              imageUrl = data[0]?.url || '';
+            }
+          } catch {}
+        }
         imageUrls.push(imageUrl || '');
         setProgress(p => Math.min(95, p + 5));
       }
