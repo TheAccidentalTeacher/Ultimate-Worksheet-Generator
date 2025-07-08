@@ -29,6 +29,18 @@ export async function POST(req: NextRequest) {
       activityTypes: string[];
       specialInstructions: string;
     }> = {
+      'Coloring Sheet': {
+        activityTypes: ['coloring-page', 'simple-drawing', 'tracing-activity'],
+        specialInstructions: `Create a coloring sheet with simple, clear outlines perfect for children. Include:
+        - Large, bold outlines that are easy to color within
+        - Age-appropriate complexity based on the grade level
+        - Clear, distinct sections for coloring
+        - Fun characters or objects related to the topic
+        - Positive, encouraging elements
+        - Space for the child's name at the top
+        - Simple instructions like "Color me!" or "Make me beautiful!"
+        DO NOT include multiple choice questions or text-heavy content. Focus on visual elements to color.`
+      },
       'Art': {
         activityTypes: ['coloring-page', 'drawing-prompt', 'art-technique', 'art-history', 'creative-project'],
         specialInstructions: 'For Art worksheets, focus on creative activities like coloring pages, drawing prompts, art techniques to practice, and hands-on creative projects. Avoid multiple choice questions.'

@@ -78,12 +78,12 @@ export default function HomePage() {
                 {" "}Magical
               </span>
               <br />
-              Worksheets with Joy
+              Coloring & Learning Adventures
             </h1>
 
             <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto leading-relaxed">
-              Your friendly workspace for crafting personalized, faith-filled learning adventures. 
-              Every worksheet is designed with love, prayer, and your child's unique needs in mind.
+              Your creative workspace for crafting whimsical coloring pages and personalized worksheets. 
+              Every creation is designed with love, joy, and your child's unique spark in mind. ✨
             </p>
 
             {/* CTA Buttons */}
@@ -141,38 +141,38 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mb-4 font-serif">
-              Why Families Love WorksheetWizard
+              Why Families Love WorksheetWise
             </h2>
             <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-              Designed with love by homeschool parents, for homeschool parents
+              Designed with love by homeschool parents, for creative families everywhere
             </p>
           </div>
 
           <div className="grid md:grid-cols-3 gap-8">
-            {/* Feature 1 */}
-            <div className="text-center p-8 bg-white/80 backdrop-blur-sm rounded-3xl shadow-lg border border-amber-100">
-              <div className="text-5xl mb-4">✨</div>
-              <h3 className="text-xl font-semibold text-gray-800 mb-4">Whimsical & Joyful</h3>
+            {/* Feature 1 - Focus on Coloring */}
+            <div className="text-center p-8 bg-white/80 backdrop-blur-sm rounded-3xl shadow-lg border border-pink-100">
+              <div className="text-5xl mb-4">🎨</div>
+              <h3 className="text-xl font-semibold text-gray-800 mb-4">Magical Coloring Pages</h3>
               <p className="text-gray-600">
-                Every worksheet is crafted with delightful touches that make learning feel like an adventure
+                Beautiful, hand-crafted coloring adventures that spark creativity and bring pure joy to learning
               </p>
             </div>
 
             {/* Feature 2 */}
-            <div className="text-center p-8 bg-white/80 backdrop-blur-sm rounded-3xl shadow-lg border border-pink-100">
-              <div className="text-5xl mb-4">💕</div>
-              <h3 className="text-xl font-semibold text-gray-800 mb-4">Faith-Filled Learning</h3>
+            <div className="text-center p-8 bg-white/80 backdrop-blur-sm rounded-3xl shadow-lg border border-amber-100">
+              <div className="text-5xl mb-4">✨</div>
+              <h3 className="text-xl font-semibold text-gray-800 mb-4">Whimsical & Joyful</h3>
               <p className="text-gray-600">
-                Seamlessly weave biblical truths into any subject with our gentle-to-rich Christian content slider
+                Every creation is filled with delightful touches that make learning feel like a magical adventure
               </p>
             </div>
 
             {/* Feature 3 */}
             <div className="text-center p-8 bg-white/80 backdrop-blur-sm rounded-3xl shadow-lg border border-blue-100">
-              <div className="text-5xl mb-4">🎯</div>
-              <h3 className="text-xl font-semibold text-gray-800 mb-4">Perfectly Customized</h3>
+              <div className="text-5xl mb-4">💕</div>
+              <h3 className="text-xl font-semibold text-gray-800 mb-4">Family-Friendly Values</h3>
               <p className="text-gray-600">
-                From pre-K to 12th grade, every worksheet adapts to your child's unique learning style and needs
+                Wholesome content with optional faith elements, designed to nurture both creativity and character
               </p>
             </div>
           </div>
@@ -185,13 +185,13 @@ export default function HomePage() {
           <div className="text-center">
             <div className="flex justify-center items-center mb-4">
               <BookOpen className="h-8 w-8 text-amber-600 mr-2" />
-              <span className="text-2xl font-bold text-gray-800 font-serif">WorksheetWizard</span>
+              <span className="text-2xl font-bold text-gray-800 font-serif">WorksheetWise</span>
             </div>
             <p className="text-gray-600 mb-4">
-              Crafting joyful learning experiences, one worksheet at a time
+              Crafting joyful coloring & learning experiences, one creation at a time
             </p>
             <p className="text-sm text-gray-500">
-              Made with 💕 by homeschool parents, for homeschool families
+              Made with 💕 by creative parents, for families who love to learn & color together
             </p>
           </div>
         </div>

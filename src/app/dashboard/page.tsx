@@ -22,12 +22,15 @@ import {
   LogOut
 } from 'lucide-react';
 import WorksheetGenerator from '@/components/WorksheetGenerator';
+import ColoringSheetGenerator from '@/components/ColoringSheetGenerator';
 
 export default function DashboardPage() {
   const router = useRouter();
   const [selectedGrade, setSelectedGrade] = useState('');
   const [selectedSubject, setSelectedSubject] = useState('');
   const [selectedTopic, setSelectedTopic] = useState('');
+  const [selectedColoringTheme, setSelectedColoringTheme] = useState('');
+  const [selectedColoringAge, setSelectedColoringAge] = useState('');
   const [numProblems, setNumProblems] = useState(10);
   const [scaffolding, setScaffolding] = useState('none');
   const [differentiation, setDifferentiation] = useState('standard');
@@ -39,6 +42,8 @@ export default function DashboardPage() {
   const [showCustomization, setShowCustomization] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [showWorksheetGenerator, setShowWorksheetGenerator] = useState(false);
+  const [showColoringGenerator, setShowColoringGenerator] = useState(false);
+  const [activeTab, setActiveTab] = useState('coloring'); // Start with coloring as default!
 
   useEffect(() => {
     // Check authentication
@@ -157,9 +162,41 @@ export default function DashboardPage() {
           <p className="text-lg text-gray-600">Let's craft the perfect learning adventure for your precious ones! ✨</p>
         </div>
 
+        {/* Tab Navigation */}
+        <div className="flex justify-center mb-8">
+          <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-amber-100 p-2">
+            <div className="flex space-x-2">
+              <button
+                onClick={() => setActiveTab('worksheets')}
+                className={`px-6 py-3 rounded-xl font-semibold transition-all flex items-center space-x-2 ${
+                  activeTab === 'worksheets'
+                    ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-lg'
+                    : 'text-gray-600 hover:text-amber-600 hover:bg-amber-50'
+                }`}
+              >
+                <BookOpen className="h-5 w-5" />
+                <span>Worksheets</span>
+              </button>
+              <button
+                onClick={() => setActiveTab('coloring')}
+                className={`px-6 py-3 rounded-xl font-semibold transition-all flex items-center space-x-2 ${
+                  activeTab === 'coloring'
+                    ? 'bg-gradient-to-r from-pink-500 to-purple-500 text-white shadow-lg'
+                    : 'text-gray-600 hover:text-pink-600 hover:bg-pink-50'
+                }`}
+              >
+                <span className="text-lg">🎨</span>
+                <span>Coloring Sheets</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
         <div className="grid lg:grid-cols-3 gap-8">
-          {/* Customization Panel */}
-          <div className="lg:col-span-2 bg-white/80 backdrop-blur-sm rounded-3xl shadow-xl border border-amber-100 p-8">
+          {activeTab === 'worksheets' ? (
+            <>
+              {/* Customization Panel */}
+              <div className="lg:col-span-2 bg-white/80 backdrop-blur-sm rounded-3xl shadow-xl border border-amber-100 p-8">
             <div className="flex items-center justify-between mb-8">
               <div className="flex items-center space-x-3">
                 <div className="bg-gradient-to-br from-amber-100 to-orange-100 p-3 rounded-full">
@@ -435,6 +472,321 @@ export default function DashboardPage() {
               </div>
             </div>
           </div>
+            </>
+          ) : (
+            /* Coloring Sheets Section - Now the MAIN focus! */
+            <>
+              <div className="lg:col-span-3 space-y-8">
+                {/* Hero Section for Coloring */}
+                <div className="bg-gradient-to-br from-pink-100 via-purple-100 to-blue-100 rounded-3xl p-8 border-4 border-pink-200 shadow-2xl relative overflow-hidden">
+                  {/* Decorative background elements */}
+                  <div className="absolute top-4 left-4 text-4xl opacity-20 animate-bounce">🎨</div>
+                  <div className="absolute top-8 right-8 text-3xl opacity-20 animate-pulse">🌈</div>
+                  <div className="absolute bottom-4 left-8 text-3xl opacity-20 animate-bounce" style={{animationDelay: '0.5s'}}>✨</div>
+                  <div className="absolute bottom-8 right-4 text-4xl opacity-20 animate-pulse" style={{animationDelay: '1s'}}>🖍️</div>
+                  
+                  <div className="relative z-10 text-center">
+                    <div className="flex justify-center mb-6">
+                      <div className="relative">
+                        <div className="w-24 h-24 bg-gradient-to-br from-pink-400 to-purple-400 rounded-full flex items-center justify-center shadow-2xl">
+                          <span className="text-4xl">🎨</span>
+                        </div>
+                        <div className="absolute -top-2 -right-2 bg-yellow-400 rounded-full p-2 shadow-lg animate-bounce">
+                          <Sparkles className="h-5 w-5 text-yellow-700" />
+                        </div>
+                        <div className="absolute -bottom-2 -left-2 bg-pink-400 rounded-full p-2 shadow-lg animate-pulse">
+                          <Heart className="h-5 w-5 text-pink-700" />
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4 font-serif">
+                      Create 
+                      <span className="text-transparent bg-clip-text bg-gradient-to-r from-pink-600 to-purple-600">
+                        {" "}Magical
+                      </span>
+                      <br />
+                      Coloring Adventures!
+                    </h2>
+                    
+                    <p className="text-xl text-gray-700 mb-8 max-w-3xl mx-auto leading-relaxed">
+                      Design beautiful, whimsical coloring pages that spark creativity and joy! 
+                      Every page is crafted with love to bring out your child's artistic spirit. ✨
+                    </p>
+                    
+                    <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 border border-pink-200 shadow-lg">
+                      <div className="flex items-center justify-center space-x-6 text-sm text-gray-600">
+                        <div className="flex items-center space-x-2">
+                          <span className="text-2xl">🎭</span>
+                          <span className="font-semibold">Hand-crafted designs</span>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <span className="text-2xl">🌈</span>
+                          <span className="font-semibold">Whimsical & fun</span>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <span className="text-2xl">🙏</span>
+                          <span className="font-semibold">Faith-friendly options</span>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <span className="text-2xl">🖨️</span>
+                          <span className="font-semibold">Print-ready PDF</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Coloring Sheet Creator */}
+                <div className="bg-white/90 backdrop-blur-sm rounded-3xl shadow-xl border border-pink-100 p-8">
+                  <div className="flex items-center justify-between mb-8">
+                    <div className="flex items-center space-x-4">
+                      <div className="bg-gradient-to-br from-pink-100 to-purple-100 p-4 rounded-full">
+                        <span className="text-3xl">🎨</span>
+                      </div>
+                      <div>
+                        <h3 className="text-3xl font-bold text-gray-900">Design Your Coloring Book</h3>
+                        <p className="text-gray-600">Choose your theme and let the magic begin!</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-8">
+                    {/* Theme Selection - Much more prominent */}
+                    <div>
+                      <label className="block text-2xl font-bold text-gray-900 mb-6 flex items-center">
+                        <div className="w-12 h-12 bg-gradient-to-br from-pink-100 to-purple-100 rounded-full flex items-center justify-center mr-4">
+                          <span className="text-2xl">1️⃣</span>
+                        </div>
+                        Pick Your Magical Theme
+                      </label>
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
+                        {[
+                          { 
+                            id: 'animals', 
+                            emoji: '🦁', 
+                            label: 'Amazing Animals', 
+                            desc: 'Lions, elephants, dolphins & more!',
+                            color: 'from-orange-400 to-red-400'
+                          },
+                          { 
+                            id: 'nature', 
+                            emoji: '🌸', 
+                            label: 'Nature Wonder', 
+                            desc: 'Flowers, trees, rainbows & gardens',
+                            color: 'from-green-400 to-blue-400'
+                          },
+                          { 
+                            id: 'bible', 
+                            emoji: '⛪', 
+                            label: 'Bible Adventures', 
+                            desc: 'Biblical stories & characters',
+                            color: 'from-purple-400 to-pink-400'
+                          },
+                          { 
+                            id: 'alphabet', 
+                            emoji: '🔤', 
+                            label: 'Alphabet Fun', 
+                            desc: 'A is for Apple, B is for Bear...',
+                            color: 'from-yellow-400 to-orange-400'
+                          },
+                          { 
+                            id: 'numbers', 
+                            emoji: '🔢', 
+                            label: 'Number Magic', 
+                            desc: 'Count and color 1 through 10',
+                            color: 'from-blue-400 to-purple-400'
+                          },
+                          { 
+                            id: 'holiday', 
+                            emoji: '🎄', 
+                            label: 'Holiday Joy', 
+                            desc: 'Christmas, Easter & celebrations',
+                            color: 'from-red-400 to-green-400'
+                          }
+                        ].map(theme => (
+                          <button
+                            key={theme.id}
+                            onClick={() => setSelectedColoringTheme(theme.id)}
+                            className={`group p-6 rounded-2xl border-3 transition-all text-center transform hover:scale-105 ${
+                              selectedColoringTheme === theme.id
+                                ? 'border-pink-400 bg-gradient-to-br from-pink-50 to-purple-50 shadow-xl scale-105'
+                                : 'border-gray-200 bg-white hover:bg-gradient-to-br hover:from-pink-50 hover:to-purple-50 hover:border-pink-300'
+                            }`}
+                          >
+                            <div className={`text-5xl mb-4 ${selectedColoringTheme === theme.id ? 'animate-bounce' : ''}`}>
+                              {theme.emoji}
+                            </div>
+                            <div className={`font-bold text-lg mb-2 ${selectedColoringTheme === theme.id ? 'text-pink-800' : 'text-gray-800'}`}>
+                              {theme.label}
+                            </div>
+                            <div className="text-sm text-gray-600 leading-relaxed">{theme.desc}</div>
+                            {selectedColoringTheme === theme.id && (
+                              <div className="mt-3 bg-gradient-to-r from-pink-400 to-purple-400 text-white text-xs font-bold py-2 px-4 rounded-full">
+                                ✨ Selected ✨
+                              </div>
+                            )}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Age Group Selection - Enhanced */}
+                    <div>
+                      <label className="block text-2xl font-bold text-gray-900 mb-6 flex items-center">
+                        <div className="w-12 h-12 bg-gradient-to-br from-purple-100 to-blue-100 rounded-full flex items-center justify-center mr-4">
+                          <span className="text-2xl">2️⃣</span>
+                        </div>
+                        Choose Age Group
+                      </label>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        {[
+                          { 
+                            value: 'toddler', 
+                            emoji: '👶',
+                            label: 'Little Artists', 
+                            age: '(2-4 years)',
+                            desc: 'Simple, large designs perfect for tiny hands',
+                            features: ['Bold outlines', 'Large spaces', 'Simple shapes']
+                          },
+                          { 
+                            value: 'preschool', 
+                            emoji: '🧒',
+                            label: 'Young Creators', 
+                            age: '(4-6 years)',
+                            desc: 'Fun and engaging with more detail',
+                            features: ['Medium detail', 'Fun characters', 'Learning elements']
+                          },
+                          { 
+                            value: 'elementary', 
+                            emoji: '👧',
+                            label: 'Artistic Explorers', 
+                            age: '(6+ years)',
+                            desc: 'Detailed designs for developing skills',
+                            features: ['Fine details', 'Complex patterns', 'Creative challenges']
+                          }
+                        ].map(age => (
+                          <button
+                            key={age.value}
+                            onClick={() => setSelectedColoringAge(age.value)}
+                            className={`group p-6 rounded-2xl border-3 transition-all text-left transform hover:scale-105 ${
+                              selectedColoringAge === age.value
+                                ? 'border-purple-400 bg-gradient-to-br from-purple-50 to-blue-50 shadow-xl scale-105'
+                                : 'border-gray-200 bg-white hover:bg-gradient-to-br hover:from-purple-50 hover:to-blue-50 hover:border-purple-300'
+                            }`}
+                          >
+                            <div className="flex items-center mb-4">
+                              <span className={`text-3xl mr-3 ${selectedColoringAge === age.value ? 'animate-bounce' : ''}`}>
+                                {age.emoji}
+                              </span>
+                              <div>
+                                <div className={`font-bold text-lg ${selectedColoringAge === age.value ? 'text-purple-800' : 'text-gray-800'}`}>
+                                  {age.label}
+                                </div>
+                                <div className="text-sm text-gray-600">{age.age}</div>
+                              </div>
+                            </div>
+                            <div className="text-sm text-gray-600 mb-3">{age.desc}</div>
+                            <div className="space-y-1">
+                              {age.features.map((feature, i) => (
+                                <div key={i} className="flex items-center text-xs text-gray-500">
+                                  <span className="mr-2">✨</span>
+                                  {feature}
+                                </div>
+                              ))}
+                            </div>
+                            {selectedColoringAge === age.value && (
+                              <div className="mt-3 bg-gradient-to-r from-purple-400 to-blue-400 text-white text-xs font-bold py-2 px-4 rounded-full text-center">
+                                ✨ Perfect Choice! ✨
+                              </div>
+                            )}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Faith Level - Enhanced */}
+                    <div>
+                      <label className="block text-2xl font-bold text-gray-900 mb-6 flex items-center">
+                        <div className="w-12 h-12 bg-gradient-to-br from-rose-100 to-pink-100 rounded-full flex items-center justify-center mr-4">
+                          <Heart className="h-6 w-6 text-rose-600" />
+                        </div>
+                        Faith & Values Level
+                      </label>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        {[
+                          { value: 0, emoji: '🌈', label: 'Secular Fun', desc: 'Pure creativity & joy' },
+                          { value: 1, emoji: '✨', label: 'Gentle Values', desc: 'Wholesome & positive' },
+                          { value: 2, emoji: '🙏', label: 'Faith-Friendly', desc: 'Christian themes woven in' },
+                          { value: 3, emoji: '⛪', label: 'Biblical Focus', desc: 'Rich in scripture & faith' }
+                        ].map(level => (
+                          <button
+                            key={level.value}
+                            onClick={() => setChristianContent(level.value)}
+                            className={`group p-4 rounded-xl border-3 transition-all text-center transform hover:scale-105 ${
+                              christianContent === level.value
+                                ? 'border-rose-400 bg-gradient-to-br from-rose-50 to-pink-50 shadow-lg scale-105'
+                                : 'border-gray-200 bg-white hover:bg-gradient-to-br hover:from-rose-50 hover:to-pink-50 hover:border-rose-300'
+                            }`}
+                          >
+                            <div className={`text-3xl mb-2 ${christianContent === level.value ? 'animate-pulse' : ''}`}>
+                              {level.emoji}
+                            </div>
+                            <div className={`text-sm font-bold mb-1 ${christianContent === level.value ? 'text-rose-800' : 'text-gray-800'}`}>
+                              {level.label}
+                            </div>
+                            <div className="text-xs text-gray-600">{level.desc}</div>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Generate Button - Make it AMAZING */}
+                    <div className="pt-8 text-center">
+                      <button 
+                        onClick={() => {
+                          if (selectedColoringTheme && selectedColoringAge) {
+                            setShowColoringGenerator(true);
+                          }
+                        }}
+                        disabled={!selectedColoringTheme || !selectedColoringAge}
+                        className={`group relative px-12 py-6 rounded-3xl font-bold text-2xl transition-all shadow-2xl transform ${
+                          selectedColoringTheme && selectedColoringAge
+                            ? 'bg-gradient-to-r from-pink-500 via-purple-500 to-pink-500 hover:from-pink-600 hover:via-purple-600 hover:to-pink-600 text-white hover:scale-105 animate-pulse'
+                            : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                        }`}
+                      >
+                        <div className="flex items-center justify-center space-x-4">
+                          <span className="text-3xl">🎨</span>
+                          <span>Create My Magical Coloring Book!</span>
+                          <Sparkles className="h-8 w-8" />
+                        </div>
+                        
+                        {selectedColoringTheme && selectedColoringAge && (
+                          <div className="absolute -inset-1 bg-gradient-to-r from-pink-400 via-purple-400 to-pink-400 rounded-3xl blur opacity-30 group-hover:opacity-50 animate-pulse"></div>
+                        )}
+                      </button>
+                      
+                      {(!selectedColoringTheme || !selectedColoringAge) && (
+                        <p className="mt-4 text-gray-500 text-sm">
+                          👆 Please select a theme and age group to continue
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Show the coloring generator */}
+                {showColoringGenerator && selectedColoringTheme && selectedColoringAge && (
+                  <ColoringSheetGenerator
+                    theme={selectedColoringTheme}
+                    ageGroup={selectedColoringAge}
+                    faithLevel={christianContent}
+                  />
+                )}
+              </div>
+            </>
+          )}
         </div>
       </main>
 
