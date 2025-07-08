@@ -28,10 +28,16 @@ export default function HomePage() {
               <span className="text-2xl font-bold text-gray-800 font-serif">WorksheetWise</span>
             </div>
             <div className="flex items-center space-x-4">
-              <button className="text-gray-600 hover:text-amber-600 transition-colors font-medium">
+              <button 
+                onClick={() => window.location.href = '/login'}
+                className="text-gray-600 hover:text-amber-600 transition-colors font-medium"
+              >
                 Sign In
               </button>
-              <button className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white px-6 py-2 rounded-full font-semibold shadow-lg transform hover:scale-105 transition-all">
+              <button 
+                onClick={() => window.location.href = '/login'}
+                className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white px-6 py-2 rounded-full font-semibold shadow-lg transform hover:scale-105 transition-all"
+              >
                 Get Started
               </button>
             </div>
@@ -89,7 +95,10 @@ export default function HomePage() {
                 <span>Let's Create Together</span>
                 <ArrowRight className="h-5 w-5" />
               </button>
-              <button className="bg-white/80 backdrop-blur-sm hover:bg-white text-gray-800 px-8 py-4 rounded-full text-lg font-semibold border-2 border-amber-200 shadow-lg transition-all">
+              <button 
+                onClick={() => window.location.href = '/login'}
+                className="bg-white/80 backdrop-blur-sm hover:bg-white text-gray-800 px-8 py-4 rounded-full text-lg font-semibold border-2 border-amber-200 shadow-lg transition-all"
+              >
                 Watch How It Works
               </button>
             </div>
@@ -113,7 +122,7 @@ export default function HomePage() {
                         Maybe Later
                       </button>
                       <button 
-                        onClick={() => window.location.href = '/create'}
+                        onClick={() => window.location.href = '/login'}
                         className="flex-1 bg-gradient-to-r from-amber-500 to-orange-500 text-white py-3 rounded-full font-semibold"
                       >
                         Let's Go!
