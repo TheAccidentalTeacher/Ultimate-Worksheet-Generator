@@ -1,0 +1,6 @@
+{
+  "/signup/page": "app/signup/page.js",
+  "/login/page": "app/login/page.js",
+  "/dashboard/page": "app/dashboard/page.js",
+  "/api/generate-advanced/route": "app/api/generate-advanced/route.js"
+}
