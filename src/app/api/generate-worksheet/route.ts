@@ -1,8 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
+
 import { ContentGenerator } from '../../../lib/ContentGenerator';
 
-// In-memory worksheet storage (replace with DB in production)
-const worksheetStorage = new Map<string, any>();
+// Use the same worksheetStorage as in progress-stream (in production, use Redis/pubsub)
+interface WorksheetStorage extends Map<string, any> {}
+declare global {
+  // eslint-disable-next-line no-var
+  var __worksheetStorage: WorksheetStorage | undefined;
+}
+const worksheetStorage: WorksheetStorage = global.__worksheetStorage || (global.__worksheetStorage = new Map());
 
 export async function POST(req: NextRequest) {
   const userSelections = await req.json();
