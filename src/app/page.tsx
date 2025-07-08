@@ -25,7 +25,7 @@ export default function HomePage() {
                 <BookOpen className="h-8 w-8 text-amber-600" />
                 <Sparkles className="h-4 w-4 text-yellow-500 absolute -top-1 -right-1" />
               </div>
-              <span className="text-2xl font-bold text-gray-800 font-serif">WorksheetWizard</span>
+              <span className="text-2xl font-bold text-gray-800 font-serif">WorksheetWise</span>
             </div>
             <div className="flex items-center space-x-4">
               <button className="text-gray-600 hover:text-amber-600 transition-colors font-medium">
