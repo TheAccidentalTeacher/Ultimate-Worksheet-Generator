@@ -12,16 +12,36 @@ interface ColoringSheetGeneratorProps {
 }
 
 export default function ColoringSheetGenerator({ theme, ageGroup, faithLevel }: ColoringSheetGeneratorProps) {
+  const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<ColoringSheetResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [images, setImages] = useState<string[]>([]); // URLs of generated images
+  const [prompts, setPrompts] = useState<string[]>([]); // Prompts for each page
+  const [editingPromptIdx, setEditingPromptIdx] = useState<number | null>(null);
+  const [promptEdits, setPromptEdits] = useState<{[idx: number]: string}>({});
+  // Prompt recorder state
+  const [promptHistory, setPromptHistory] = useState<Array<{
+    timestamp: string;
+    prompt: string;
+    model: string;
+    type: 'worksheet' | 'image';
+    pageIndex?: number;
+  }>>([]);
+  const [showPromptHistory, setShowPromptHistory] = useState(false);
+
+  // Build default prompt for a page
+  const buildPrompt = (page: any) => `${page.title}: ${page.description}`;
 
   async function generateColoringSheet() {
     setLoading(true);
+    setError(null);
     setProgress(0);
     setResult(null);
     setImages([]);
+    setPrompts([]);
+    setEditingPromptIdx(null);
+    setPromptEdits({});
 
     // Progress simulation for a nice UX
     const progressInterval = setInterval(() => {
@@ -35,14 +55,39 @@ export default function ColoringSheetGenerator({ theme, ageGroup, faithLevel }: 
       // Simulate some processing time for the whimsical effect
       await new Promise(resolve => setTimeout(resolve, 1000));
 
+      // Record worksheet (GPT) prompt
+      const worksheetPrompt = `Theme: ${theme}, Age Group: ${ageGroup}, Faith Level: ${faithLevel}`;
+      setPromptHistory(h => [
+        ...h,
+        {
+          timestamp: new Date().toLocaleString(),
+          prompt: worksheetPrompt,
+          model: 'generateColoringSheetData (local/gpt)',
+          type: 'worksheet',
+        },
+      ]);
+
       const coloringSheet = generateColoringSheetData(theme, ageGroup, faithLevel.toString());
       setResult(coloringSheet);
 
-      // For each coloring page, generate an image
+      // For each coloring page, let parent edit prompt, then generate an image
+      const defaultPrompts = coloringSheet.coloringPages.map(buildPrompt);
+      setPrompts(defaultPrompts);
+      // Only auto-generate if not in edit mode
       const imageUrls: string[] = [];
-      for (const page of coloringSheet.coloringPages) {
-        // Use the page description as the prompt
-        const prompt = `${page.title}: ${page.description}`;
+      for (let i = 0; i < coloringSheet.coloringPages.length; i++) {
+        const prompt = defaultPrompts[i];
+        // Record image prompt
+        setPromptHistory(h => [
+          ...h,
+          {
+            timestamp: new Date().toLocaleString(),
+            prompt,
+            model: 'Replicate SDXL (line art)',
+            type: 'image',
+            pageIndex: i,
+          },
+        ]);
         const imageUrl = await generateColoringImage(prompt);
         imageUrls.push(imageUrl || '');
         setProgress(p => Math.min(95, p + 5));
@@ -53,8 +98,8 @@ export default function ColoringSheetGenerator({ theme, ageGroup, faithLevel }: 
       setTimeout(() => {
         clearInterval(progressInterval);
       }, 500);
-    } catch (error) {
-      console.error('Error generating coloring sheet:', error);
+    } catch (error: any) {
+      setError(error?.message || 'An error occurred while generating your coloring sheet.');
       clearInterval(progressInterval);
     } finally {
       setTimeout(() => {
@@ -66,8 +111,36 @@ export default function ColoringSheetGenerator({ theme, ageGroup, faithLevel }: 
 
   const handleDownloadPDF = () => {
     if (result) {
-      downloadColoringSheetAsPDF(result);
+      downloadColoringSheetAsPDF(result, images);
     }
+  };
+
+  // Allow parent to edit prompt for a page
+  const handleEditPrompt = (idx: number) => {
+    setEditingPromptIdx(idx);
+    setPromptEdits(edits => ({ ...edits, [idx]: prompts[idx] }));
+  };
+  const handlePromptChange = (idx: number, value: string) => {
+    setPromptEdits(edits => ({ ...edits, [idx]: value }));
+  };
+  const handleSavePrompt = async (idx: number) => {
+    const newPrompt = promptEdits[idx];
+    setPrompts(p => p.map((old, i) => (i === idx ? newPrompt : old)));
+    setEditingPromptIdx(null);
+    // Record image prompt
+    setPromptHistory(h => [
+      ...h,
+      {
+        timestamp: new Date().toLocaleString(),
+        prompt: newPrompt,
+        model: 'Replicate SDXL (line art)',
+        type: 'image',
+        pageIndex: idx,
+      },
+    ]);
+    // Regenerate image for this page
+    const imageUrl = await generateColoringImage(newPrompt);
+    setImages(imgs => imgs.map((old, i) => (i === idx ? (imageUrl || '') : old)));
   };
 
   React.useEffect(() => {
@@ -77,7 +150,15 @@ export default function ColoringSheetGenerator({ theme, ageGroup, faithLevel }: 
   }, [theme, ageGroup, faithLevel]);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 min-w-0 max-w-full">
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-xl p-4">
+          <div className="flex items-center">
+            <div className="text-red-600 mr-3">⚠️</div>
+            <div className="text-red-800 font-medium">{error}</div>
+          </div>
+        </div>
+      )}
       {loading && (
         <div className="bg-gradient-to-r from-pink-50 to-purple-50 border border-pink-200 rounded-2xl p-8">
           <div className="text-center">
@@ -110,8 +191,31 @@ export default function ColoringSheetGenerator({ theme, ageGroup, faithLevel }: 
         </div>
       )}
 
+      {/* Prompt Recorder Panel */}
+      <div className="mb-4 min-w-0 max-w-full">
+        <button
+          className="text-xs text-blue-700 underline mb-2"
+          onClick={() => setShowPromptHistory(v => !v)}
+        >
+          {showPromptHistory ? 'Hide' : 'Show'} Prompt Recorder
+        </button>
+        {showPromptHistory && (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 max-h-64 overflow-y-auto text-xs min-w-0 max-w-full break-words">
+            <div className="font-bold mb-2 text-blue-900">Prompt Recorder</div>
+            <ul className="space-y-1 pl-4">
+              {promptHistory.map((entry, i) => (
+                <li key={i} className="border-b border-blue-100 pb-1 mb-1">
+                  <span className="text-blue-800">[{entry.timestamp}]</span> <span className="font-semibold">{entry.type === 'worksheet' ? 'Worksheet' : 'Image'} Prompt</span> <span className="text-gray-600">({entry.model}{entry.pageIndex !== undefined ? `, Page ${entry.pageIndex + 1}` : ''})</span><br />
+                  <span className="text-gray-800 break-words whitespace-pre-line">{entry.prompt}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </div>
+
       {result && !loading && (
-        <div className="bg-white/90 backdrop-blur-sm rounded-3xl shadow-xl border border-pink-200 overflow-hidden">
+        <div className="bg-white/90 backdrop-blur-sm rounded-3xl shadow-xl border border-pink-200 overflow-hidden min-w-0 max-w-full">
           {/* Header */}
           <div className="bg-gradient-to-r from-pink-500 to-purple-500 p-6 text-white">
             <div className="flex items-center justify-between">
@@ -127,14 +231,14 @@ export default function ColoringSheetGenerator({ theme, ageGroup, faithLevel }: 
           </div>
 
           {/* Content Preview */}
-          <div className="p-8">
-            <div className="bg-gradient-to-br from-pink-50 via-purple-50 to-blue-50 rounded-2xl p-6 mb-6">
+          <div className="p-8 min-w-0 max-w-full">
+            <div className="bg-gradient-to-br from-pink-50 via-purple-50 to-blue-50 rounded-2xl p-6 mb-6 min-w-0 max-w-full">
               <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
                 <span className="text-2xl mr-2">🎨</span>
                 What's Inside Your Coloring Book
               </h3>
               
-              <div className="grid md:grid-cols-2 gap-4 mb-6">
+                <div className="grid md:grid-cols-2 gap-4 mb-6 min-w-0 max-w-full">
                 <div className="bg-white/80 rounded-xl p-4 border border-pink-200">
                   <h4 className="font-semibold text-purple-800 mb-2">📖 Theme & Details</h4>
                   <p className="text-sm text-gray-700 mb-1"><strong>Theme:</strong> {result.theme}</p>
@@ -151,26 +255,47 @@ export default function ColoringSheetGenerator({ theme, ageGroup, faithLevel }: 
               </div>
 
               {/* Pages Preview */}
-              <div className="space-y-4">
+                <div className="space-y-4 min-w-0 max-w-full">
                 <h4 className="font-semibold text-gray-800 flex items-center">
                   <span className="text-lg mr-2">🌟</span>
                   Coloring Pages Preview
                 </h4>
                 <div className="grid gap-4">
                   {result.coloringPages.map((page, index) => (
-                    <div key={page.id} className="bg-white/90 rounded-xl p-4 border border-gray-200 flex flex-col items-center">
+                    <div key={page.id} className="bg-white/90 rounded-xl p-4 border border-gray-200 flex flex-col items-center min-w-0 max-w-full">
                       <div className="bg-gradient-to-br from-pink-100 to-purple-100 rounded-full w-10 h-10 flex items-center justify-center font-bold text-purple-700 mb-2">
                         {page.id}
                       </div>
                       <h5 className="font-semibold text-gray-800 mb-1">{page.title}</h5>
                       <p className="text-sm text-gray-600 mb-2">{page.description}</p>
+                      {/* Prompt editor */}
+                      {editingPromptIdx === index ? (
+                        <div className="w-full flex flex-col items-center mb-2">
+                          <textarea
+                            className="w-full max-w-xs border border-pink-300 rounded-lg p-2 text-sm mb-2"
+                            value={promptEdits[index]}
+                            onChange={e => handlePromptChange(index, e.target.value)}
+                            rows={2}
+                          />
+                          <div className="flex gap-2">
+                            <button onClick={() => handleSavePrompt(index)} className="bg-pink-500 text-white px-3 py-1 rounded-full text-xs font-bold">Save & Regenerate</button>
+                            <button onClick={() => setEditingPromptIdx(null)} className="bg-gray-200 text-gray-700 px-3 py-1 rounded-full text-xs">Cancel</button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="w-full flex flex-col items-center mb-2">
+                          <div className="text-xs text-gray-500 mb-1">Prompt used for image:</div>
+                          <div className="bg-gray-50 border border-dashed border-pink-200 rounded p-2 text-xs w-full max-w-xs mb-1 break-words whitespace-pre-line">{prompts[index]}</div>
+                          <button onClick={() => handleEditPrompt(index)} className="text-pink-600 text-xs underline">Edit prompt & regenerate</button>
+                        </div>
+                      )}
                       {/* Show generated image */}
                       {images[index] ? (
                         <img src={images[index]} alt={page.title} className="w-full max-w-xs border-2 border-dashed border-pink-300 rounded-lg bg-white my-2" style={{background: '#fff'}} />
                       ) : (
                         <div className="w-full h-64 flex items-center justify-center text-gray-400 italic">Image loading...</div>
                       )}
-                      <div className="flex flex-wrap gap-2 mt-2">
+                      <div className="flex flex-wrap gap-2 mt-2 min-w-0 max-w-full">
                         {page.elements.slice(0, 3).map((element, i) => (
                           <span key={i} className="bg-purple-100 text-purple-700 px-2 py-1 rounded-full text-xs font-medium">
                             {element}
@@ -183,8 +308,8 @@ export default function ColoringSheetGenerator({ theme, ageGroup, faithLevel }: 
                         )}
                       </div>
                       {page.christianConnection && (
-                        <div className="mt-2 bg-blue-50 border border-blue-200 rounded-lg p-2">
-                          <p className="text-xs text-blue-700 flex items-center">
+                        <div className="mt-2 bg-blue-50 border border-blue-200 rounded-lg p-2 min-w-0 max-w-full">
+                          <p className="text-xs text-blue-700 flex items-center break-words whitespace-pre-line">
                             <Heart className="h-3 w-3 mr-1" />
                             {page.christianConnection}
                           </p>
@@ -202,7 +327,7 @@ export default function ColoringSheetGenerator({ theme, ageGroup, faithLevel }: 
                     <span className="text-lg mr-2">🎭</span>
                     Bonus Activities
                   </h4>
-                  <ul className="text-sm text-gray-700 space-y-1">
+                  <ul className="text-sm text-gray-700 space-y-1 pl-4 break-words">
                     {result.activities.slice(0, 3).map((activity, i) => (
                       <li key={i} className="flex items-center">
                         <span className="text-yellow-500 mr-2">⭐</span>
@@ -239,3 +364,9 @@ export default function ColoringSheetGenerator({ theme, ageGroup, faithLevel }: 
     </div>
   );
 }
+
+ColoringSheetGenerator.propTypes = {
+  theme: require('prop-types').string.isRequired,
+  ageGroup: require('prop-types').string.isRequired,
+  faithLevel: require('prop-types').number.isRequired,
+};

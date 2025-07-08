@@ -18,9 +18,12 @@ export interface ColoringSheetResult {
 }
 
 // Generate truly whimsical coloring sheet PDFs
-export const downloadColoringSheetAsPDF = (coloringSheet: ColoringSheetResult) => {
+export const downloadColoringSheetAsPDF = (coloringSheet: ColoringSheetResult, images?: string[]) => {
   const printWindow = window.open('', '_blank');
   if (!printWindow) return;
+
+  // Helper to get image for a page index
+  const getImage = (idx: number) => images && images[idx] ? `<div style="text-align:center;margin:20px 0;"><img src='${images[idx]}' alt='Coloring page image' style='max-width:100%;max-height:500px;border:3px dashed #FFB6C1;border-radius:18px;background:#fff;box-shadow:0 2px 12px #f8bbd0;'/></div>` : '';
 
   const html = `
     <!DOCTYPE html>
@@ -526,30 +529,27 @@ export const downloadColoringSheetAsPDF = (coloringSheet: ColoringSheetResult) =
           <p>Remember: There's no wrong way to color! Let your creativity shine and have fun! 🌈</p>
         </div>
         
-        ${coloringSheet.coloringPages.map(page => `
+        ${coloringSheet.coloringPages.map((page, idx) => `
           <div class="coloring-page">
             <div class="page-title">${page.title}</div>
             <div class="page-description">${page.description}</div>
-            
+            ${getImage(idx)}
             <div class="coloring-area">
               <div class="coloring-prompt">
                 Imagine and color: ${page.description}
               </div>
-              
               <div class="elements-list">
                 ${page.elements.map(element => `
                   <div class="element-item">${element}</div>
                 `).join('')}
               </div>
             </div>
-            
             ${page.christianConnection ? `
               <div class="christian-connection">
                 <h4>Faith Connection 🙏</h4>
                 <p>${page.christianConnection}</p>
               </div>
             ` : ''}
-            
             ${page.coloringTips ? `
               <div class="coloring-tips">
                 <h4>Coloring Tips & Ideas 💡</h4>

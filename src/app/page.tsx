@@ -1,13 +1,15 @@
 'use client';
 
 import React, { useState } from 'react';
+import ErrorBoundary from '@/components/ErrorBoundary';
 import { BookOpen, Heart, Sparkles, ArrowRight, Star } from 'lucide-react';
 
 export default function HomePage() {
   const [showOnboarding, setShowOnboarding] = useState(false);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-pink-50">
+    <ErrorBoundary>
+      <div className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-pink-50">
       {/* Floating decorative elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-20 left-10 w-4 h-4 bg-yellow-300 rounded-full animate-bounce opacity-70"></div>
@@ -196,6 +198,7 @@ export default function HomePage() {
           </div>
         </div>
       </footer>
-    </div>
+      </div>
+    </ErrorBoundary>
   );
 }

@@ -1,6 +1,8 @@
 'use client';
 
 import React, { useState } from 'react';
+import SubjectGradeSelector from './SubjectGradeSelector';
+import ScopeSequenceSuggestion from './ScopeSequenceSuggestion';
 import { Send, Loader2, Download, Eye, Sparkles, BookOpen, Heart, Target, Clock, FileText } from 'lucide-react';
 import { downloadAsPDF, downloadAsWord, WorksheetResult } from '@/lib/downloadUtils';
 
@@ -29,12 +31,16 @@ interface WorksheetGeneratorProps {
   };
 }
 
+
 export default function WorksheetGenerator({ customization }: WorksheetGeneratorProps) {
   const [prompt, setPrompt] = useState('');
   const [result, setResult] = useState<WorksheetResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [progress, setProgress] = useState(0);
+  // For scope & sequence suggestion
+  const [subject, setSubject] = useState('');
+  const [grade, setGrade] = useState('');
 
   async function generateWorksheet(e?: React.FormEvent) {
     if (e) e.preventDefault();
@@ -115,43 +121,57 @@ export default function WorksheetGenerator({ customization }: WorksheetGenerator
     }
   };
 
+
   return (
-    <div className="w-full space-y-6">
-      {/* Simple prompt input for custom requests */}
+    <div className="w-full space-y-6 min-w-0 max-w-full">
+      {/* Subject/Grade selection and scope & sequence suggestion */}
       {!customization && (
-        <form onSubmit={generateWorksheet} className="space-y-4">
-          <div>
-            <label className="block text-lg font-semibold text-gray-900 mb-3">
-              Describe your worksheet
-            </label>
-            <textarea
-              className="w-full border-2 border-gray-200 rounded-xl p-4 text-gray-900 placeholder-gray-500 focus:border-amber-500 focus:ring-2 focus:ring-amber-200 transition-all resize-none"
-              rows={3}
-              value={prompt}
-              onChange={e => setPrompt(e.target.value)}
-              placeholder="Example: Create a 3rd grade math worksheet on multiplication with biblical themes..."
-              required
-            />
-          </div>
-          <button
-            type="submit"
-            disabled={loading || !prompt.trim()}
-            className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 disabled:from-gray-400 disabled:to-gray-500 text-white px-8 py-4 rounded-xl font-semibold text-lg transition-all flex items-center justify-center space-x-2 shadow-lg hover:shadow-xl"
-          >
-            {loading ? (
-              <>
-                <Loader2 className="h-5 w-5 animate-spin" />
-                <span>Creating...</span>
-              </>
-            ) : (
-              <>
-                <Sparkles className="h-5 w-5" />
-                <span>Generate Worksheet</span>
-                <Send className="h-5 w-5" />
-              </>
-            )}
-          </button>
-        </form>
+        <>
+          <SubjectGradeSelector
+            subject={subject}
+            setSubject={setSubject}
+            grade={grade}
+            setGrade={setGrade}
+            subjects={["Math", "Reading", "Science"]}
+            grades={["K", "1", "2", "3"]}
+          />
+          {subject && grade && (
+            <ScopeSequenceSuggestion subject={subject} grade={grade} />
+          )}
+          <form onSubmit={generateWorksheet} className="space-y-4">
+            <div>
+              <label className="block text-lg font-semibold text-gray-900 mb-3">
+                Describe your worksheet
+              </label>
+              <textarea
+                className="w-full border-2 border-gray-200 rounded-xl p-4 text-gray-900 placeholder-gray-500 focus:border-amber-500 focus:ring-2 focus:ring-amber-200 transition-all resize-none break-words min-w-0 max-w-full"
+                rows={3}
+                value={prompt}
+                onChange={e => setPrompt(e.target.value)}
+                placeholder="Example: Create a 3rd grade math worksheet on multiplication with biblical themes..."
+                required
+              />
+            </div>
+            <button
+              type="submit"
+              disabled={loading || !prompt.trim()}
+              className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 disabled:from-gray-400 disabled:to-gray-500 text-white px-8 py-4 rounded-xl font-semibold text-lg transition-all flex items-center justify-center space-x-2 shadow-lg hover:shadow-xl"
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                  <span>Creating...</span>
+                </>
+              ) : (
+                <>
+                  <Sparkles className="h-5 w-5" />
+                  <span>Generate Worksheet</span>
+                  <Send className="h-5 w-5" />
+                </>
+              )}
+            </button>
+          </form>
+        </>
       )}
 
       {/* Generate button for dashboard customization */}
@@ -214,7 +234,7 @@ export default function WorksheetGenerator({ customization }: WorksheetGenerator
 
       {/* Results */}
       {result && (
-        <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-lg animate-fade-in">
+        <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-lg animate-fade-in min-w-0 max-w-full">
           {/* Header */}
           <div className="bg-gradient-to-r from-amber-50 to-orange-50 p-6 border-b border-gray-200">
             <div className="flex items-center justify-between mb-4">
@@ -268,23 +288,23 @@ export default function WorksheetGenerator({ customization }: WorksheetGenerator
           </div>
 
           {/* Content */}
-          <div className="p-6">
+          <div className="p-6 min-w-0 max-w-full">
             {/* Description & Instructions */}
-            <div className="mb-6 space-y-4">
+            <div className="mb-6 space-y-4 min-w-0 max-w-full">
               <div>
                 <h4 className="text-lg font-semibold text-gray-900 mb-2">Description</h4>
-                <p className="text-gray-700 bg-gray-50 rounded-lg p-3">{result.description}</p>
+                <p className="text-gray-700 bg-gray-50 rounded-lg p-3 break-words whitespace-pre-line">{result.description}</p>
               </div>
               <div>
                 <h4 className="text-lg font-semibold text-gray-900 mb-2">Student Instructions</h4>
-                <p className="text-gray-700 bg-blue-50 rounded-lg p-3">{result.instructions}</p>
+                <p className="text-gray-700 bg-blue-50 rounded-lg p-3 break-words whitespace-pre-line">{result.instructions}</p>
               </div>
             </div>
 
             {/* Problems */}
             <div className="mb-6">
               <h4 className="text-lg font-semibold text-gray-900 mb-4">Problems & Activities</h4>
-              <div className="space-y-4">
+              <div className="space-y-4 min-w-0 max-w-full">
                 {result.problems.map((problem, index) => (
                   <div key={problem.id || index} className="border border-gray-200 rounded-lg p-4 bg-gray-50">
                     <div className="flex items-start space-x-3">
@@ -301,25 +321,25 @@ export default function WorksheetGenerator({ customization }: WorksheetGenerator
                             <Heart className="h-4 w-4 text-red-500" />
                           )}
                         </div>
-                        <p className="text-gray-900 font-medium mb-2">{problem.question}</p>
+                        <p className="text-gray-900 font-medium mb-2 break-words whitespace-pre-line">{problem.question}</p>
                         
                         {problem.options && (
-                          <div className="mb-2 space-y-1">
+                          <div className="mb-2 space-y-1 min-w-0 max-w-full">
                             {problem.options.map((option, i) => (
-                              <div key={i} className="text-sm text-gray-600 pl-4">{option}</div>
+                              <div key={i} className="text-sm text-gray-600 pl-4 break-words whitespace-pre-line">{option}</div>
                             ))}
                           </div>
                         )}
                         
                         <div className="space-y-2 text-sm">
-                          <p className="text-green-700">
+                          <p className="text-green-700 break-words whitespace-pre-line">
                             <strong>Answer:</strong> {problem.answer}
                           </p>
-                          <p className="text-gray-600">
+                          <p className="text-gray-600 break-words whitespace-pre-line">
                             <strong>Explanation:</strong> {problem.explanation}
                           </p>
                           {problem.christianConnection && (
-                            <p className="text-purple-700">
+                            <p className="text-purple-700 break-words whitespace-pre-line">
                               <strong>Faith Connection:</strong> {problem.christianConnection}
                             </p>
                           )}
@@ -337,7 +357,7 @@ export default function WorksheetGenerator({ customization }: WorksheetGenerator
               {result.materials && result.materials.length > 0 && (
                 <div>
                   <h4 className="text-lg font-semibold text-gray-900 mb-3">Materials Needed</h4>
-                  <ul className="space-y-2">
+                  <ul className="space-y-2 pl-4 break-words">
                     {result.materials.map((material, index) => (
                       <li key={index} className="flex items-center text-gray-700">
                         <span className="text-amber-600 mr-2">•</span>
@@ -352,7 +372,7 @@ export default function WorksheetGenerator({ customization }: WorksheetGenerator
               {result.extensions && result.extensions.length > 0 && (
                 <div>
                   <h4 className="text-lg font-semibold text-gray-900 mb-3">Extension Activities</h4>
-                  <ul className="space-y-2">
+                  <ul className="space-y-2 pl-4 break-words">
                     {result.extensions.map((extension, index) => (
                       <li key={index} className="flex items-center text-gray-700">
                         <span className="text-amber-600 mr-2">✨</span>
@@ -368,7 +388,7 @@ export default function WorksheetGenerator({ customization }: WorksheetGenerator
             {result.answerKey && (
               <div className="mt-6 bg-blue-50 rounded-lg p-4">
                 <h4 className="text-lg font-semibold text-gray-900 mb-2">Teacher Notes</h4>
-                <p className="text-gray-700">{result.answerKey}</p>
+                <p className="text-gray-700 break-words whitespace-pre-line">{result.answerKey}</p>
               </div>
             )}
 
@@ -404,3 +424,17 @@ export default function WorksheetGenerator({ customization }: WorksheetGenerator
     </div>
   );
 }
+
+WorksheetGenerator.propTypes = {
+  customization: require('prop-types').shape({
+    grade: require('prop-types').string,
+    subject: require('prop-types').string,
+    topic: require('prop-types').string,
+    numProblems: require('prop-types').number,
+    scaffolding: require('prop-types').string,
+    differentiation: require('prop-types').string,
+    christianContent: require('prop-types').number,
+    worksheetStyle: require('prop-types').string,
+    timeEstimate: require('prop-types').string,
+  }),
+};

@@ -14,9 +14,14 @@ export async function POST(req: NextRequest) {
 
   // Replicate Stable Diffusion coloring model (SDXL or SD 1.5)
   const replicateUrl = 'https://api.replicate.com/v1/predictions';
-  const model = 'stability-ai/sdxl'; // You can swap to a line-art-specific model if needed
+  // You can swap to a line-art-specific model if needed, e.g. "t2i-adapter-lineart" or "dreamshaper"
+  const model = 'stability-ai/sdxl';
+  // Strong, explicit prompt for coloring book line art
+  const lineArtPrompt = `${prompt}, black and white line art, coloring book page, simple, thick outlines, no shading, no color, high contrast, kid friendly, vector, clear background, centered subject, minimal background, for children to color`;
+  const negativePrompt = 'color, photorealistic, realistic, 3d, shadow, blur, text, watermark, signature, background, grayscale, filled, painting, sketch, pencil, soft, blurry, low quality, cropped, cut off, extra limbs, extra objects, duplicate, error';
   const input = {
-    prompt: `${prompt}, black and white line art, coloring book page, simple, no shading, no color, high contrast`,
+    prompt: lineArtPrompt,
+    negative_prompt: negativePrompt,
     width: 768,
     height: 768,
     num_outputs: 1
