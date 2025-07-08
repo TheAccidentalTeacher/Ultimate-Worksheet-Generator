@@ -24,9 +24,45 @@ export async function POST(req: NextRequest) {
     const christianLevels = ['secular', 'gently Christian', 'moderately Christian', 'richly biblical'];
     const christianLevel = christianLevels[christianContent] || 'moderately Christian';
     
+    // Subject-specific activity types and instructions
+    const subjectGuidelines: Record<string, {
+      activityTypes: string[];
+      specialInstructions: string;
+    }> = {
+      'Art': {
+        activityTypes: ['coloring-page', 'drawing-prompt', 'art-technique', 'art-history', 'creative-project'],
+        specialInstructions: 'For Art worksheets, focus on creative activities like coloring pages, drawing prompts, art techniques to practice, and hands-on creative projects. Avoid multiple choice questions.'
+      },
+      'Music': {
+        activityTypes: ['rhythm-practice', 'note-identification', 'listening-activity', 'singing-exercise', 'instrument-practice'],
+        specialInstructions: 'For Music worksheets, include rhythm exercises, note identification, listening activities, and practical music-making tasks.'
+      },
+      'Physical Education': {
+        activityTypes: ['exercise-routine', 'movement-game', 'fitness-challenge', 'sports-skill', 'health-habit'],
+        specialInstructions: 'For PE worksheets, focus on physical activities, movement games, fitness challenges, and health education.'
+      },
+      'Math': {
+        activityTypes: ['word-problem', 'calculation', 'pattern-recognition', 'geometry-exercise', 'measurement-activity'],
+        specialInstructions: 'For Math worksheets, include a variety of problem types: word problems, calculations, visual problems, and real-world applications.'
+      },
+      'Science': {
+        activityTypes: ['experiment', 'observation', 'diagram-labeling', 'hypothesis', 'classification'],
+        specialInstructions: 'For Science worksheets, include hands-on experiments, observations, diagram labeling, and scientific thinking exercises.'
+      },
+      'ELA/Language Arts': {
+        activityTypes: ['reading-comprehension', 'creative-writing', 'grammar-practice', 'vocabulary', 'poetry'],
+        specialInstructions: 'For Language Arts worksheets, include reading comprehension, creative writing prompts, grammar exercises, and vocabulary activities.'
+      }
+    };
+
+    const subjectInfo = subjectGuidelines[subject] || {
+      activityTypes: ['multiple-choice', 'short-answer', 'fill-in-blank', 'true-false'],
+      specialInstructions: 'Create age-appropriate activities that match the subject matter.'
+    };
+    
     const systemPrompt = `You are an expert homeschool educator who creates engaging, age-appropriate worksheets. Create worksheets that are ${christianLevel} in nature.
 
-Your task is to generate a structured worksheet with exactly ${numProblems} problems/activities.
+Your task is to generate a structured worksheet with exactly ${numProblems} activities.
 
 Guidelines:
 - Grade Level: ${grade}
@@ -37,6 +73,11 @@ Guidelines:
 - Scaffolding: ${scaffolding}
 - Difficulty: ${differentiation}
 - Duration: ${timeEstimate}
+
+IMPORTANT SUBJECT-SPECIFIC GUIDELINES:
+${subjectInfo.specialInstructions}
+
+Recommended activity types for ${subject}: ${subjectInfo.activityTypes.join(', ')}
 
 For Christian content levels:
 - Secular: No religious content
@@ -56,17 +97,18 @@ Return a JSON object with this exact structure:
   "problems": [
     {
       "id": 1,
-      "type": "multiple-choice|fill-in-blank|short-answer|word-problem|matching|true-false",
-      "question": "The question text",
-      "options": ["A", "B", "C", "D"],
-      "answer": "Correct answer",
-      "explanation": "Why this is correct",
-      "christianConnection": "Optional faith connection"
+      "type": "Choose from: ${subjectInfo.activityTypes.join('|')}",
+      "question": "The activity description or question",
+      "options": ["Only include if multiple choice"],
+      "answer": "Expected response or completion criteria",
+      "explanation": "Why this activity helps learning",
+      "christianConnection": "Optional faith connection",
+      "materials": "Any specific materials needed for this activity"
     }
   ],
   "answerKey": "Brief teacher notes or tips",
   "extensions": ["Optional extension activities"],
-  "materials": ["Any materials needed"]
+  "materials": ["Any materials needed for the entire worksheet"]
 }`;
 
     const userPrompt = prompt || `Create a ${grade} ${subject} worksheet on ${topic} with ${numProblems} problems that is ${christianLevel}.`;

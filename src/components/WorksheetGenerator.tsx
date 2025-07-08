@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { Send, Loader2, Download, Eye, Sparkles, BookOpen, Heart, Target, Clock, FileText } from 'lucide-react';
+import { downloadAsPDF, downloadAsWord, WorksheetResult } from '@/lib/downloadUtils';
 
 interface WorksheetProblem {
   id: number;
@@ -11,21 +12,7 @@ interface WorksheetProblem {
   answer: string;
   explanation: string;
   christianConnection?: string;
-}
-
-interface WorksheetResult {
-  title: string;
-  grade: string;
-  subject: string;
-  topic: string;
-  description: string;
-  instructions: string;
-  estimatedTime: string;
-  problems: WorksheetProblem[];
-  answerKey: string;
-  extensions?: string[];
-  materials?: string[];
-  error?: string;
+  materials?: string;
 }
 
 interface WorksheetGeneratorProps {
@@ -47,14 +34,24 @@ export default function WorksheetGenerator({ customization }: WorksheetGenerator
   const [result, setResult] = useState<WorksheetResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [progress, setProgress] = useState(0);
 
-  async function generateWorksheet(e: React.FormEvent) {
-    e.preventDefault();
+  async function generateWorksheet(e?: React.FormEvent) {
+    if (e) e.preventDefault();
     if (!prompt.trim() && !customization) return;
 
     setLoading(true);
     setError('');
     setResult(null);
+    setProgress(0);
+
+    // Progress simulation
+    const progressInterval = setInterval(() => {
+      setProgress(prev => {
+        if (prev >= 90) return prev;
+        return prev + Math.random() * 15;
+      });
+    }, 500);
 
     try {
       const requestData = {
@@ -71,11 +68,19 @@ export default function WorksheetGenerator({ customization }: WorksheetGenerator
       if (!res.ok) throw new Error('Failed to generate worksheet');
       
       const data = await res.json();
-      setResult(data);
+      setProgress(100);
+      setTimeout(() => {
+        setResult(data);
+        clearInterval(progressInterval);
+      }, 500);
     } catch (err: any) {
+      clearInterval(progressInterval);
       setError(err.message || 'An error occurred while generating your worksheet');
     } finally {
-      setLoading(false);
+      setTimeout(() => {
+        setLoading(false);
+        setProgress(0);
+      }, 600);
     }
   }
 
@@ -87,6 +92,25 @@ export default function WorksheetGenerator({ customization }: WorksheetGenerator
       case 'word-problem': return '🧮';
       case 'matching': return '🔗';
       case 'true-false': return '✅';
+      case 'coloring-page': return '🎨';
+      case 'drawing-prompt': return '✏️';
+      case 'art-technique': return '🖌️';
+      case 'creative-project': return '🎭';
+      case 'rhythm-practice': return '🥁';
+      case 'note-identification': return '🎵';
+      case 'listening-activity': return '👂';
+      case 'singing-exercise': return '🎤';
+      case 'exercise-routine': return '🏃';
+      case 'movement-game': return '🤸';
+      case 'fitness-challenge': return '💪';
+      case 'experiment': return '🔬';
+      case 'observation': return '🔍';
+      case 'diagram-labeling': return '📊';
+      case 'reading-comprehension': return '📖';
+      case 'creative-writing': return '✍️';
+      case 'grammar-practice': return '📝';
+      case 'vocabulary': return '📚';
+      case 'poetry': return '🎭';
       default: return '📋';
     }
   };
@@ -132,24 +156,50 @@ export default function WorksheetGenerator({ customization }: WorksheetGenerator
 
       {/* Generate button for dashboard customization */}
       {customization && (
-        <button
-          onClick={generateWorksheet}
-          disabled={loading}
-          className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 disabled:from-gray-400 disabled:to-gray-500 text-white px-8 py-6 rounded-2xl font-bold text-xl transition-all shadow-lg hover:shadow-xl flex items-center justify-center space-x-3"
-        >
-          {loading ? (
-            <>
-              <Loader2 className="h-6 w-6 animate-spin" />
-              <span>Creating Your Magical Worksheet...</span>
-            </>
-          ) : (
-            <>
-              <Sparkles className="h-6 w-6" />
-              <span>Create My Magical Worksheet!</span>
-              <BookOpen className="h-6 w-6" />
-            </>
+        <div className="space-y-4">
+          <button
+            onClick={() => generateWorksheet()}
+            disabled={loading}
+            className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 disabled:from-gray-400 disabled:to-gray-500 text-white px-8 py-6 rounded-2xl font-bold text-xl transition-all shadow-lg hover:shadow-xl flex items-center justify-center space-x-3"
+          >
+            {loading ? (
+              <>
+                <Loader2 className="h-6 w-6 animate-spin" />
+                <span>Creating Your Magical Worksheet...</span>
+              </>
+            ) : (
+              <>
+                <Sparkles className="h-6 w-6" />
+                <span>Create My Magical Worksheet!</span>
+                <BookOpen className="h-6 w-6" />
+              </>
+            )}
+          </button>
+          
+          {/* Progress Bar */}
+          {loading && (
+            <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+              <div 
+                className="h-full bg-gradient-to-r from-amber-400 to-orange-400 rounded-full transition-all duration-500 ease-out"
+                style={{ width: `${progress}%` }}
+              />
+            </div>
           )}
-        </button>
+          
+          {loading && (
+            <div className="text-center text-gray-600 text-sm">
+              <div className="flex items-center justify-center space-x-2">
+                <Sparkles className="h-4 w-4 text-amber-500" />
+                <span>
+                  {progress < 30 ? 'Gathering inspiration...' :
+                   progress < 60 ? 'Crafting your perfect worksheet...' :
+                   progress < 90 ? 'Adding finishing touches...' :
+                   'Almost ready!'}
+                </span>
+              </div>
+            </div>
+          )}
+        </div>
       )}
 
       {/* Error Message */}
@@ -191,11 +241,17 @@ export default function WorksheetGenerator({ customization }: WorksheetGenerator
                 </div>
               </div>
               <div className="flex items-center space-x-2">
-                <button className="bg-white hover:bg-gray-50 text-gray-700 px-4 py-2 rounded-lg border border-gray-300 transition-colors flex items-center space-x-2">
+                <button 
+                  onClick={() => window.print()}
+                  className="bg-white hover:bg-gray-50 text-gray-700 px-4 py-2 rounded-lg border border-gray-300 transition-colors flex items-center space-x-2"
+                >
                   <Eye className="h-4 w-4" />
                   <span>Preview</span>
                 </button>
-                <button className="bg-amber-600 hover:bg-amber-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center space-x-2">
+                <button 
+                  onClick={() => result && downloadAsPDF(result)}
+                  className="bg-amber-600 hover:bg-amber-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center space-x-2"
+                >
                   <Download className="h-4 w-4" />
                   <span>Download</span>
                 </button>
@@ -318,15 +374,24 @@ export default function WorksheetGenerator({ customization }: WorksheetGenerator
 
             {/* Action Buttons */}
             <div className="mt-6 flex flex-wrap gap-3">
-              <button className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center space-x-2">
+              <button 
+                onClick={() => result && downloadAsPDF(result)}
+                className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center space-x-2"
+              >
                 <Download className="h-4 w-4" />
                 <span>Download PDF</span>
               </button>
-              <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center space-x-2">
+              <button 
+                onClick={() => result && downloadAsWord(result)}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center space-x-2"
+              >
                 <Download className="h-4 w-4" />
                 <span>Download DOCX</span>
               </button>
-              <button className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition-colors">
+              <button 
+                onClick={() => generateWorksheet()}
+                className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition-colors"
+              >
                 Create Answer Key
               </button>
               <button className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg transition-colors">

@@ -1,15 +1,47 @@
 {
   "pages": {
-    "/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/page.js"
+    "/_not-found": [
+      "static/chunks/webpack-bfce54893ee1367e.js",
+      "static/chunks/fd9d1056-fe71d9d3341a0a8a.js",
+      "static/chunks/938-0cae05d75ea6ae3d.js",
+      "static/chunks/main-app-7a2385f40b68d578.js",
+      "static/chunks/app/_not-found-e0388bca29104022.js"
     ],
     "/layout": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/css/app/layout.css",
-      "static/chunks/app/layout.js"
+      "static/chunks/webpack-bfce54893ee1367e.js",
+      "static/chunks/fd9d1056-fe71d9d3341a0a8a.js",
+      "static/chunks/938-0cae05d75ea6ae3d.js",
+      "static/chunks/main-app-7a2385f40b68d578.js",
+      "static/css/dfb3e5c4b044f176.css",
+      "static/chunks/app/layout-560bfe523433cbd7.js"
+    ],
+    "/dashboard/page": [
+      "static/chunks/webpack-bfce54893ee1367e.js",
+      "static/chunks/fd9d1056-fe71d9d3341a0a8a.js",
+      "static/chunks/938-0cae05d75ea6ae3d.js",
+      "static/chunks/main-app-7a2385f40b68d578.js",
+      "static/chunks/app/dashboard/page-f2be52ff9ee27b76.js"
+    ],
+    "/login/page": [
+      "static/chunks/webpack-bfce54893ee1367e.js",
+      "static/chunks/fd9d1056-fe71d9d3341a0a8a.js",
+      "static/chunks/938-0cae05d75ea6ae3d.js",
+      "static/chunks/main-app-7a2385f40b68d578.js",
+      "static/chunks/app/login/page-b2c75e35774fecc6.js"
+    ],
+    "/page": [
+      "static/chunks/webpack-bfce54893ee1367e.js",
+      "static/chunks/fd9d1056-fe71d9d3341a0a8a.js",
+      "static/chunks/938-0cae05d75ea6ae3d.js",
+      "static/chunks/main-app-7a2385f40b68d578.js",
+      "static/chunks/app/page-65a73bd4114241a7.js"
+    ],
+    "/signup/page": [
+      "static/chunks/webpack-bfce54893ee1367e.js",
+      "static/chunks/fd9d1056-fe71d9d3341a0a8a.js",
+      "static/chunks/938-0cae05d75ea6ae3d.js",
+      "static/chunks/main-app-7a2385f40b68d578.js",
+      "static/chunks/app/signup/page-8681bd815731dd0e.js"
     ]
   }
 }
