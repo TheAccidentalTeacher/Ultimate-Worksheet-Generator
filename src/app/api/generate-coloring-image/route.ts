@@ -12,7 +12,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'No prompt provided' }, { status: 400 });
     }
 
-    console.log('Image generation request for prompt:', prompt);
+    console.log('🎨 COLORING PAGE API - Image generation request for prompt:', prompt);
     console.log('Subject:', subject, 'Grade:', grade, 'Type:', worksheetType);
     console.log('DALL-E preferred:', preferDalle);
     console.log('OPENAI_API_KEY available:', !!OPENAI_API_KEY);
@@ -64,31 +64,61 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // SKIP ALL AI MODELS - Go straight to guaranteed SVG generation
-    console.log('Generating SVG coloring page (reliable approach)...');
+    // FORCE SVG GENERATION - Skip AI models entirely 
+    console.log('🎨 FORCING SVG coloring page generation (reliable approach)...');
     try {
       const svgUrl = await generateAdvancedSVGColoringPage(prompt);
       if (svgUrl) {
-        console.log('Advanced SVG coloring page generated:', svgUrl);
+        console.log('✅ Advanced SVG coloring page generated successfully');
         return NextResponse.json({ imageUrl: svgUrl, source: 'svg-advanced' });
+      } else {
+        console.error('❌ Advanced SVG generation returned null');
       }
     } catch (error) {
-      console.error('Advanced SVG generation failed:', error);
+      console.error('❌ Advanced SVG generation failed:', error);
     }
 
-    // Fallback to simple SVG
-    console.log('Generating simple SVG coloring page as fallback...');
+    // Fallback to simple SVG (guaranteed to work)
+    console.log('🔄 Generating simple SVG coloring page as fallback...');
     try {
       const svgUrl = await generateSimpleSVGColoringPage(prompt);
       if (svgUrl) {
-        console.log('Simple SVG coloring page generated:', svgUrl);
+        console.log('✅ Simple SVG coloring page generated successfully');
         return NextResponse.json({ imageUrl: svgUrl, source: 'svg-simple' });
+      } else {
+        console.error('❌ Simple SVG generation returned null');
       }
     } catch (error) {
-      console.error('Simple SVG generation failed:', error);
+      console.error('❌ Simple SVG generation failed:', error);
     }
 
-    console.error('All image generation services failed or unavailable');
+    // EMERGENCY FALLBACK - Generate a guaranteed simple coloring page
+    console.log('🚨 All SVG generation failed, creating emergency fallback...');
+    const emergencySVG = `<?xml version="1.0" encoding="UTF-8"?>
+    <svg width="800" height="600" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600">
+      <rect width="100%" height="100%" fill="white"/>
+      <!-- Simple shape based on prompt -->
+      <circle cx="400" cy="300" r="120" fill="none" stroke="black" stroke-width="4"/>
+      <rect x="300" y="200" width="200" height="200" fill="none" stroke="black" stroke-width="4"/>
+      <polygon points="400,150 350,250 450,250" fill="none" stroke="black" stroke-width="4"/>
+      <!-- Title -->
+      <text x="400" y="100" text-anchor="middle" font-family="Arial" font-size="24" font-weight="bold" fill="black">
+        Color Me!
+      </text>
+      <!-- Subject -->
+      <text x="400" y="520" text-anchor="middle" font-family="Arial" font-size="18" fill="black">
+        ${prompt.split(' ').slice(0, 3).join(' ')}
+      </text>
+      <!-- Border -->
+      <rect x="20" y="20" width="760" height="560" fill="none" stroke="black" stroke-width="3" rx="15"/>
+    </svg>`;
+    
+    const emergencyDataUrl = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(emergencySVG)}`;
+    console.log('✅ Emergency SVG fallback created successfully');
+    return NextResponse.json({ imageUrl: emergencyDataUrl, source: 'svg-emergency' });
+
+    // This should never be reached now
+    console.error('❌ All image generation services failed or unavailable');
     return NextResponse.json({ 
       error: 'Image generation services unavailable. Please configure API keys.',
       debug: {
@@ -345,9 +375,9 @@ async function generateSimpleSVGColoringPage(prompt: string): Promise<string | n
       <text x="400" y="550" text-anchor="middle" font-family="Arial, sans-serif" font-size="20" fill="black">Color Me: ${prompt}</text>
     </svg>`;
     
-    // Convert SVG to data URL
-    const svgDataUrl = `data:image/svg+xml;base64,${Buffer.from(svg).toString('base64')}`;
-    console.log('Generated simple SVG coloring page');
+    // Convert SVG to data URL (use proper encoding for serverless environment)
+    const svgDataUrl = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+    console.log('✅ Generated simple SVG coloring page');
     return svgDataUrl;
     
   } catch (error) {
@@ -388,8 +418,8 @@ async function generateAdvancedSVGColoringPage(prompt: string): Promise<string |
           </text>
         </svg>`;
         
-        const svgDataUrl = `data:image/svg+xml;base64,${Buffer.from(svg).toString('base64')}`;
-        console.log('Generated dynamic SVG coloring page');
+        const svgDataUrl = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+        console.log('✅ Generated dynamic SVG coloring page');
         return svgDataUrl;
         
       } catch (error) {
@@ -869,7 +899,7 @@ function generateTemplateSVG(prompt: string, width: number, height: number): str
     </text>
   </svg>`;
   
-  const svgDataUrl = `data:image/svg+xml;base64,${Buffer.from(svg).toString('base64')}`;
+  const svgDataUrl = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
   return svgDataUrl;
 }
 
