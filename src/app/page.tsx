@@ -127,7 +127,7 @@ export default function HomePage() {
                         onClick={() => window.location.href = '/login'}
                         className="flex-1 bg-gradient-to-r from-amber-500 to-orange-500 text-white py-3 rounded-full font-semibold"
                       >
-                        Let's Go!
+                        Let&apos;s Go!
                       </button>
                     </div>
                   </div>
