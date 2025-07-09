@@ -278,7 +278,7 @@ export default function WorksheetGenerator({ customization }: WorksheetGenerator
                     </span>
                     <span className="flex items-center">
                       <FileText className="h-4 w-4 mr-1" />
-                      {result.problems.length} problems
+                      {(result.problems && Array.isArray(result.problems)) ? result.problems.length : 0} problems
                     </span>
                   </div>
                 </div>
@@ -328,7 +328,7 @@ export default function WorksheetGenerator({ customization }: WorksheetGenerator
             <div className="mb-6">
               <h4 className="text-lg font-semibold text-gray-900 mb-4">Problems & Activities</h4>
               <div className="space-y-4 min-w-0 max-w-full">
-                {result.problems.map((problem, index) => (
+                {(result.problems && Array.isArray(result.problems) ? result.problems : []).map((problem, index) => (
                   <div key={problem.id || index} className="border border-gray-200 rounded-lg p-4 bg-gray-50">
                     <div className="flex items-start space-x-3">
                       <div className="bg-amber-100 text-amber-600 rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold flex-shrink-0">
