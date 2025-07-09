@@ -64,91 +64,28 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Try Stable Diffusion via Replicate for high-quality coloring pages
-    if (REPLICATE_API_TOKEN && REPLICATE_API_TOKEN !== 'your_replicate_api_token_here' && REPLICATE_API_TOKEN.length > 10) {
-      console.log('Attempting Stable Diffusion via Replicate for coloring pages...');
-      try {
-        const imageUrl = await generateStableDiffusionColoringPage(enhancedPrompt);
-        if (imageUrl) {
-          console.log('Stable Diffusion success:', imageUrl);
-          return NextResponse.json({ imageUrl, source: 'stable-diffusion' });
-        }
-      } catch (error) {
-        console.error('Stable Diffusion failed:', error);
-      }
-    } else {
-      console.log('Skipping Stable Diffusion - API token not configured properly');
-    }
-
-    // Try Pixabay for line art/coloring pages
-    if (PIXABAY_API_KEY && PIXABAY_API_KEY !== 'your-pixabay-api-key-here' && PIXABAY_API_KEY.length > 10) {
-      console.log('Attempting Pixabay for coloring page images...');
-      try {
-        const imageUrl = await getPixabayColoringPage(enhancedPrompt);
-        if (imageUrl) {
-          console.log('Pixabay coloring page success:', imageUrl);
-          return NextResponse.json({ imageUrl, source: 'pixabay-coloring' });
-        }
-      } catch (error) {
-        console.error('Pixabay coloring page search failed:', error);
-      }
-    }
-
-    // Try OpenClipart for line art
-    console.log('Attempting OpenClipart for vector line art...');
+    // SKIP ALL AI MODELS - Go straight to guaranteed SVG generation
+    console.log('Generating SVG coloring page (reliable approach)...');
     try {
-      const imageUrl = await getOpenClipartImage(enhancedPrompt);
-      if (imageUrl) {
-        console.log('OpenClipart success:', imageUrl);
-        return NextResponse.json({ imageUrl, source: 'openclipart' });
+      const svgUrl = await generateAdvancedSVGColoringPage(prompt);
+      if (svgUrl) {
+        console.log('Advanced SVG coloring page generated:', svgUrl);
+        return NextResponse.json({ imageUrl: svgUrl, source: 'svg-advanced' });
       }
     } catch (error) {
-      console.error('OpenClipart failed:', error);
+      console.error('Advanced SVG generation failed:', error);
     }
 
-    // Try Wikimedia Commons for line art
-    console.log('Attempting Wikimedia Commons for line drawings...');
+    // Fallback to simple SVG
+    console.log('Generating simple SVG coloring page as fallback...');
     try {
-      const imageUrl = await getWikimediaLineArt(enhancedPrompt);
-      if (imageUrl) {
-        console.log('Wikimedia line art success:', imageUrl);
-        return NextResponse.json({ imageUrl, source: 'wikimedia-lineart' });
-      }
-    } catch (error) {
-      console.error('Wikimedia line art failed:', error);
-    }
-
-    // If DALL-E wasn't preferred but Unsplash failed, try DALL-E as fallback
-    if (!preferDalle && OPENAI_API_KEY && OPENAI_API_KEY !== 'your-openai-api-key-here' && OPENAI_API_KEY.length > 10) {
-      console.log('Attempting DALL-E 3 as fallback...');
-      try {
-        const timeoutPromise = new Promise<never>((_, reject) =>
-          setTimeout(() => reject(new Error('DALL-E fallback timeout after 8 seconds')), 8000)
-        );
-        
-        const dallePromise = generateDallE3Image(enhancedPrompt);
-        const imageUrl = await Promise.race([dallePromise, timeoutPromise]);
-        
-        if (imageUrl) {
-          console.log('DALL-E 3 fallback success:', imageUrl);
-          return NextResponse.json({ imageUrl, source: 'dall-e-3-fallback' });
-        }
-      } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : 'Unknown DALL-E error';
-        console.error('DALL-E 3 fallback failed:', errorMessage);
-      }
-    }
-
-    // Generate a simple SVG coloring page as last resort
-    console.log('Generating simple SVG coloring page as final fallback...');
-    try {
-      const svgUrl = await generateSimpleSVGColoringPage(enhancedPrompt);
+      const svgUrl = await generateSimpleSVGColoringPage(prompt);
       if (svgUrl) {
         console.log('Simple SVG coloring page generated:', svgUrl);
-        return NextResponse.json({ imageUrl: svgUrl, source: 'svg-generated' });
+        return NextResponse.json({ imageUrl: svgUrl, source: 'svg-simple' });
       }
     } catch (error) {
-      console.error('SVG generation failed:', error);
+      console.error('Simple SVG generation failed:', error);
     }
 
     console.error('All image generation services failed or unavailable');
@@ -419,76 +356,521 @@ async function generateSimpleSVGColoringPage(prompt: string): Promise<string | n
   }
 }
 
-async function generateStableDiffusionColoringPage(prompt: string): Promise<string | null> {
+async function generateAdvancedSVGColoringPage(prompt: string): Promise<string | null> {
   try {
-    console.log('Generating Stable Diffusion coloring page for prompt:', prompt);
+    console.log('Generating dynamic SVG coloring page for:', prompt);
     
-    // Use a very specific model and approach for line art
-    const response = await fetch('https://api.replicate.com/v1/predictions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Token ${REPLICATE_API_TOKEN}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        // Try a model specifically trained on line art
-        version: 'stability-ai/sdxl:39ed52f2a78e934b3ba6e2a89f5b1c712de7dfea535525255b1aa35c5565e08b',
-        input: {
-          prompt: `line art coloring book style: ${prompt}, black ink outline drawing, thick lines, white background, no color, no shading, simple line drawing, children's coloring book illustration`,
-          negative_prompt: 'color, colored, painting, shading, shadows, gradients, complex details, photorealistic, photo, realistic, blurry, low quality, gray tones, textures, filled areas, detailed shading, watercolor, pencil sketching, thin lines, fine details, small elements, cluttered, busy background, text, words, signatures, 3d render',
-          width: 1024,
-          height: 1024,
-          num_inference_steps: 40,
-          guidance_scale: 20, // Very high guidance to force line art style
-          scheduler: 'K_EULER_ANCESTRAL',
-          refine: 'expert_ensemble_refiner',
-          high_noise_frac: 0.8
-        }
-      })
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Replicate API error:', response.status, errorText);
-      throw new Error(`Replicate API error: ${response.status}`);
-    }
-
-    const prediction = await response.json();
-    console.log('Stable Diffusion prediction created:', prediction.id);
-
-    // Poll for completion
-    let attempts = 0;
-    const maxAttempts = 50; // Longer timeout for high quality
+    const width = 1200;
+    const height = 1200;
     
-    while (prediction.status !== 'succeeded' && prediction.status !== 'failed' && attempts < maxAttempts) {
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      const statusResponse = await fetch(`https://api.replicate.com/v1/predictions/${prediction.id}`, {
-        headers: { 'Authorization': `Token ${REPLICATE_API_TOKEN}` }
-      });
-      
-      if (statusResponse.ok) {
-        const updatedPrediction = await statusResponse.json();
-        Object.assign(prediction, updatedPrediction);
-        console.log('Stable Diffusion status:', prediction.status);
+    // Use GPT-4 to analyze the prompt and break it down into drawable components
+    if (OPENAI_API_KEY && OPENAI_API_KEY !== 'your-openai-api-key-here' && OPENAI_API_KEY.length > 10) {
+      try {
+        const svgInstructions = await generateSVGInstructions(prompt);
+        const svgContent = await buildSVGFromInstructions(svgInstructions);
+        
+        const svg = `<?xml version="1.0" encoding="UTF-8"?>
+        <svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}">
+          <rect width="100%" height="100%" fill="white"/>
+          ${svgContent}
+          
+          <!-- Border -->
+          <rect x="50" y="50" width="${width-100}" height="${height-100}" fill="none" stroke="black" stroke-width="3" rx="20"/>
+          
+          <!-- Title -->
+          <text x="${width/2}" y="100" text-anchor="middle" font-family="Arial Black, sans-serif" font-size="36" font-weight="bold" fill="black">
+            Color Me!
+          </text>
+          
+          <!-- Subject label -->
+          <text x="${width/2}" y="${height-100}" text-anchor="middle" font-family="Arial, sans-serif" font-size="24" fill="black">
+            ${prompt.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
+          </text>
+        </svg>`;
+        
+        const svgDataUrl = `data:image/svg+xml;base64,${Buffer.from(svg).toString('base64')}`;
+        console.log('Generated dynamic SVG coloring page');
+        return svgDataUrl;
+        
+      } catch (error) {
+        console.error('Dynamic SVG generation failed, falling back to template:', error);
       }
-      
-      attempts++;
     }
-
-    if (prediction.status === 'succeeded' && prediction.output && prediction.output.length > 0) {
-      const imageUrl = prediction.output[0];
-      console.log('Stable Diffusion completed successfully:', imageUrl);
-      return imageUrl;
-    } else {
-      console.error('Stable Diffusion failed or timed out:', prediction.status, prediction.error);
-      return null;
-    }
-
+    
+    // Fallback to template-based generation if GPT-4 fails
+    return generateTemplateSVG(prompt, width, height);
+    
   } catch (error) {
-    console.error('Stable Diffusion generation error:', error instanceof Error ? error.message : error);
+    console.error('Advanced SVG generation error:', error);
     return null;
   }
+}
+
+async function generateSVGInstructions(prompt: string): Promise<any> {
+  const systemPrompt = `You are an expert at breaking down any scene, story, or concept into simple geometric shapes that can be drawn as SVG elements for a children's coloring page.
+
+Your task is to analyze the user's prompt and return a JSON object describing how to draw it using basic SVG shapes.
+
+AVAILABLE SVG ELEMENTS:
+- circle: {type: "circle", cx: number, cy: number, r: number}
+- rectangle: {type: "rect", x: number, y: number, width: number, height: number}
+- ellipse: {type: "ellipse", cx: number, cy: number, rx: number, ry: number}
+- line: {type: "line", x1: number, y1: number, x2: number, y2: number}
+- path: {type: "path", d: "path data"}
+- polygon: {type: "polygon", points: "x1,y1 x2,y2 x3,y3"}
+- text: {type: "text", x: number, y: number, content: string, fontSize: number}
+
+COORDINATE SYSTEM: 0,0 is top-left, canvas is 1200x1200, leave margins of 150px on all sides.
+
+REQUIREMENTS:
+- Break ANY subject into 8-20 simple, recognizable shapes
+- Use thick stroke-width (4-6px) for main elements, 2-3px for details
+- All elements must have fill="none" and stroke="black"
+- Focus on key identifying features that make the subject recognizable
+- Make shapes large enough for children to color easily
+- For abstract concepts (atoms, maps), use symbolic representations
+- For objects (first aid kit), focus on distinctive shape and details
+- Consider adding text labels for educational value
+
+EXAMPLES:
+- First aid kit: Rectangle with cross symbol and handle
+- Map: Irregular coastline shapes with simple geographic features
+- Atom: Central circle with orbital paths and electron dots
+- Any vehicle: Basic chassis, wheels, distinctive features
+- Any building: Basic structure with doors, windows, roof
+- Any animal: Head, body, legs, distinctive features (trunk, mane, etc.)
+- Any plant: Stem, leaves, flowers/fruit in simple geometric forms
+
+Return a JSON object with this structure:
+{
+  "elements": [
+    {type: "circle", cx: 600, cy: 400, r: 100, strokeWidth: 4, description: "main body"},
+    {type: "rect", x: 550, y: 300, width: 100, height: 50, strokeWidth: 3, description: "head"}
+  ],
+  "sceneDescription": "brief description of what you drew"
+}`;
+
+  const userMessage = `Create SVG drawing instructions for: "${prompt}"
+
+Break this down into simple geometric shapes that a child could recognize and color. Think about the most essential elements that would make this recognizable.
+
+SPECIFIC GUIDANCE:
+- For objects (first aid kit, tools, etc.): Focus on distinctive shape, key details, and symbols
+- For geographic features (maps, etc.): Use simple coastlines, major features, basic labels
+- For scientific concepts (atoms, etc.): Use symbolic representations with clear structure
+- For vehicles: Basic chassis, wheels, and identifying features
+- For buildings: Simple structure with doors, windows, roof
+- For people/characters: Basic head, body, clothing, distinctive features
+- For plants: Stem, leaves, flowers/fruit in geometric forms
+- For animals: Head, body, legs, and distinctive features
+
+Make it educational and recognizable while keeping it simple enough for coloring.`;
+
+  const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${OPENAI_API_KEY}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: 'gpt-4o',
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userMessage }
+      ],
+      max_tokens: 1000,
+      temperature: 0.3,
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`GPT-4 API error: ${response.status}`);
+  }
+
+  const data = await response.json();
+  const instructions = data.choices?.[0]?.message?.content?.trim();
+  
+  if (!instructions) {
+    throw new Error('No SVG instructions generated');
+  }
+  
+  // Parse the JSON response
+  try {
+    const parsed = JSON.parse(instructions);
+    console.log('GPT-4 SVG instructions:', parsed.sceneDescription);
+    return parsed;
+  } catch (parseError) {
+    console.error('Failed to parse SVG instructions:', parseError);
+    throw new Error('Invalid SVG instructions format');
+  }
+}
+
+async function buildSVGFromInstructions(instructions: any): Promise<string> {
+  const elements = instructions.elements || [];
+  let svgContent = '';
+  
+  // Add a comment describing the scene
+  if (instructions.sceneDescription) {
+    svgContent += `<!-- ${instructions.sceneDescription} -->\n`;
+  }
+  
+  for (const element of elements) {
+    const strokeWidth = element.strokeWidth || 3;
+    const stroke = 'black';
+    const fill = 'none';
+    
+    switch (element.type) {
+      case 'circle':
+        svgContent += `<circle cx="${element.cx}" cy="${element.cy}" r="${element.r}" stroke="${stroke}" stroke-width="${strokeWidth}" fill="${fill}"/>\n`;
+        break;
+        
+      case 'rect':
+        const rx = element.rx ? ` rx="${element.rx}"` : '';
+        svgContent += `<rect x="${element.x}" y="${element.y}" width="${element.width}" height="${element.height}"${rx} stroke="${stroke}" stroke-width="${strokeWidth}" fill="${fill}"/>\n`;
+        break;
+        
+      case 'ellipse':
+        svgContent += `<ellipse cx="${element.cx}" cy="${element.cy}" rx="${element.rx}" ry="${element.ry}" stroke="${stroke}" stroke-width="${strokeWidth}" fill="${fill}"/>\n`;
+        break;
+        
+      case 'line':
+        svgContent += `<line x1="${element.x1}" y1="${element.y1}" x2="${element.x2}" y2="${element.y2}" stroke="${stroke}" stroke-width="${strokeWidth}"/>\n`;
+        break;
+        
+      case 'path':
+        svgContent += `<path d="${element.d}" stroke="${stroke}" stroke-width="${strokeWidth}" fill="${fill}"/>\n`;
+        break;
+        
+      case 'polygon':
+        svgContent += `<polygon points="${element.points}" stroke="${stroke}" stroke-width="${strokeWidth}" fill="${fill}"/>\n`;
+        break;
+        
+      case 'text':
+        const fontSize = element.fontSize || 24;
+        svgContent += `<text x="${element.x}" y="${element.y}" font-family="Arial, sans-serif" font-size="${fontSize}" stroke="${stroke}" stroke-width="1" fill="none">${element.content}</text>\n`;
+        break;
+        
+      default:
+        console.warn('Unknown SVG element type:', element.type);
+    }
+    
+    // Add a comment for each element if description is provided
+    if (element.description) {
+      svgContent = svgContent.trimEnd() + ` <!-- ${element.description} -->\n`;
+    }
+  }
+  
+  return svgContent;
+}
+
+function generateTemplateSVG(prompt: string, width: number, height: number): string {
+  const promptLower = prompt.toLowerCase();
+  let svgContent = '';
+  
+  // Expanded template system with more categories
+  if (promptLower.includes('lion') || promptLower.includes('mane')) {
+    // ...existing lion code...
+    svgContent = `
+      <!-- Lion head and mane -->
+      <circle cx="600" cy="500" r="200" fill="none" stroke="black" stroke-width="4"/>
+      <circle cx="600" cy="350" r="150" fill="none" stroke="black" stroke-width="4"/>
+      <!-- Face features -->
+      <ellipse cx="550" cy="320" rx="20" ry="30" fill="none" stroke="black" stroke-width="3"/>
+      <ellipse cx="650" cy="320" rx="20" ry="30" fill="none" stroke="black" stroke-width="3"/>
+      <circle cx="550" cy="320" r="8" fill="black"/>
+      <circle cx="650" cy="320" r="8" fill="black"/>
+    `;
+  } else if (promptLower.includes('first aid') || promptLower.includes('medical kit')) {
+    // First aid kit
+    svgContent = `
+      <!-- Main kit case -->
+      <rect x="400" y="300" width="400" height="300" rx="20" fill="none" stroke="black" stroke-width="5"/>
+      
+      <!-- Red cross symbol -->
+      <rect x="570" y="350" width="60" height="200" fill="none" stroke="black" stroke-width="4"/>
+      <rect x="500" y="420" width="200" height="60" fill="none" stroke="black" stroke-width="4"/>
+      
+      <!-- Handle -->
+      <rect x="550" y="250" width="100" height="30" rx="15" fill="none" stroke="black" stroke-width="4"/>
+      <line x1="580" y1="280" x2="580" y2="300" stroke="black" stroke-width="3"/>
+      <line x1="620" y1="280" x2="620" y2="300" stroke="black" stroke-width="3"/>
+      
+      <!-- Latches -->
+      <rect x="380" y="380" width="20" height="40" fill="none" stroke="black" stroke-width="3"/>
+      <rect x="800" y="380" width="20" height="40" fill="none" stroke="black" stroke-width="3"/>
+      <rect x="380" y="480" width="20" height="40" fill="none" stroke="black" stroke-width="3"/>
+      <rect x="800" y="480" width="20" height="40" fill="none" stroke="black" stroke-width="3"/>
+      
+      <!-- Medical supplies inside (showing through transparent case) -->
+      <rect x="450" y="350" width="40" height="80" fill="none" stroke="black" stroke-width="2"/> <!-- bandage -->
+      <circle cx="750" cy="380" r="25" fill="none" stroke="black" stroke-width="2"/> <!-- bottle -->
+      <rect x="720" y="500" width="60" height="20" fill="none" stroke="black" stroke-width="2"/> <!-- pills -->
+    `;
+  } else if (promptLower.includes('map') || promptLower.includes('geography') || promptLower.includes('crimea') || promptLower.includes('country')) {
+    // Simple map template
+    svgContent = `
+      <!-- Map border -->
+      <rect x="200" y="200" width="800" height="600" fill="none" stroke="black" stroke-width="4"/>
+      
+      <!-- Landmass/peninsula (general shape that can represent any region) -->
+      <path d="M 300 400 Q 400 350 500 400 Q 600 380 700 420 Q 750 450 800 480 Q 820 520 800 560 Q 750 580 700 570 Q 600 590 500 580 Q 400 570 350 540 Q 300 500 300 450 Z" 
+            fill="none" stroke="black" stroke-width="4"/>
+      
+      <!-- Coastal features -->
+      <path d="M 350 420 Q 380 400 420 420" fill="none" stroke="black" stroke-width="3"/>
+      <path d="M 650 450 Q 680 430 720 450" fill="none" stroke="black" stroke-width="3"/>
+      
+      <!-- Cities/locations (dots) -->
+      <circle cx="400" cy="450" r="8" fill="black"/>
+      <circle cx="600" cy="470" r="8" fill="black"/>
+      <circle cx="700" cy="500" r="8" fill="black"/>
+      
+      <!-- Compass rose -->
+      <circle cx="850" cy="300" r="40" fill="none" stroke="black" stroke-width="3"/>
+      <line x1="850" y1="260" x2="850" y2="340" stroke="black" stroke-width="3"/>
+      <line x1="810" y1="300" x2="890" y2="300" stroke="black" stroke-width="3"/>
+      <text x="850" y="250" text-anchor="middle" font-family="Arial" font-size="16" fill="black">N</text>
+      
+      <!-- Scale -->
+      <line x1="250" y1="750" x2="350" y2="750" stroke="black" stroke-width="3"/>
+      <text x="300" y="740" text-anchor="middle" font-family="Arial" font-size="14" fill="black">Scale</text>
+      
+      <!-- Water indication -->
+      <path d="M 200 600 Q 250 580 300 600 Q 350 620 400 600" fill="none" stroke="black" stroke-width="2"/>
+      <path d="M 200 650 Q 250 630 300 650 Q 350 670 400 650" fill="none" stroke="black" stroke-width="2"/>
+    `;
+  } else if (promptLower.includes('atom') || promptLower.includes('electron') || promptLower.includes('nucleus') || promptLower.includes('science')) {
+    // Atomic structure
+    svgContent = `
+      <!-- Nucleus -->
+      <circle cx="600" cy="400" r="50" fill="none" stroke="black" stroke-width="5"/>
+      
+      <!-- Protons and neutrons in nucleus -->
+      <circle cx="580" cy="380" r="12" fill="none" stroke="black" stroke-width="2"/>
+      <circle cx="620" cy="380" r="12" fill="none" stroke="black" stroke-width="2"/>
+      <circle cx="580" cy="420" r="12" fill="none" stroke="black" stroke-width="2"/>
+      <circle cx="620" cy="420" r="12" fill="none" stroke="black" stroke-width="2"/>
+      <text x="580" y="385" text-anchor="middle" font-family="Arial" font-size="10" fill="black">P</text>
+      <text x="620" y="385" text-anchor="middle" font-family="Arial" font-size="10" fill="black">N</text>
+      
+      <!-- Electron orbits -->
+      <ellipse cx="600" cy="400" rx="150" ry="80" fill="none" stroke="black" stroke-width="3"/>
+      <ellipse cx="600" cy="400" rx="200" ry="100" fill="none" stroke="black" stroke-width="3"/>
+      <ellipse cx="600" cy="400" rx="250" ry="120" fill="none" stroke="black" stroke-width="3"/>
+      
+      <!-- Electrons -->
+      <circle cx="750" cy="400" r="8" fill="black"/> <!-- electron 1 -->
+      <circle cx="450" cy="400" r="8" fill="black"/> <!-- electron 2 -->
+      <circle cx="650" cy="300" r="8" fill="black"/> <!-- electron 3 -->
+      <circle cx="550" cy="500" r="8" fill="black"/> <!-- electron 4 -->
+      <circle cx="800" cy="350" r="8" fill="black"/> <!-- electron 5 -->
+      <circle cx="400" cy="450" r="8" fill="black"/> <!-- electron 6 -->
+      
+      <!-- Labels -->
+      <text x="600" y="550" text-anchor="middle" font-family="Arial" font-size="18" fill="black">Nucleus</text>
+      <text x="750" y="430" text-anchor="middle" font-family="Arial" font-size="14" fill="black">e-</text>
+      <text x="450" y="430" text-anchor="middle" font-family="Arial" font-size="14" fill="black">e-</text>
+    `;
+  } else if (promptLower.includes('car') || promptLower.includes('vehicle') || promptLower.includes('truck')) {
+    // Generic vehicle
+    svgContent = `
+      <!-- Main body -->
+      <rect x="300" y="400" width="600" height="150" rx="20" fill="none" stroke="black" stroke-width="4"/>
+      
+      <!-- Cab/roof -->
+      <rect x="450" y="300" width="300" height="100" rx="15" fill="none" stroke="black" stroke-width="4"/>
+      
+      <!-- Wheels -->
+      <circle cx="400" cy="580" r="60" fill="none" stroke="black" stroke-width="4"/>
+      <circle cx="400" cy="580" r="30" fill="none" stroke="black" stroke-width="3"/>
+      <circle cx="800" cy="580" r="60" fill="none" stroke="black" stroke-width="4"/>
+      <circle cx="800" cy="580" r="30" fill="none" stroke="black" stroke-width="3"/>
+      
+      <!-- Windows -->
+      <rect x="470" y="320" width="80" height="60" fill="none" stroke="black" stroke-width="3"/>
+      <rect x="570" y="320" width="80" height="60" fill="none" stroke="black" stroke-width="3"/>
+      <rect x="670" y="320" width="60" height="60" fill="none" stroke="black" stroke-width="3"/>
+      
+      <!-- Headlights -->
+      <circle cx="320" cy="450" r="25" fill="none" stroke="black" stroke-width="3"/>
+      <circle cx="320" cy="500" r="25" fill="none" stroke="black" stroke-width="3"/>
+      
+      <!-- Door -->
+      <line x1="600" y1="400" x2="600" y2="550" stroke="black" stroke-width="3"/>
+      <circle cx="580" cy="475" r="5" fill="black"/> <!-- door handle -->
+    `;
+  } else if (promptLower.includes('house') || promptLower.includes('building') || promptLower.includes('home')) {
+    // Simple house
+    svgContent = `
+      <!-- Main house structure -->
+      <rect x="400" y="400" width="400" height="300" fill="none" stroke="black" stroke-width="4"/>
+      
+      <!-- Roof -->
+      <polygon points="350,400 600,250 850,400" fill="none" stroke="black" stroke-width="4"/>
+      
+      <!-- Chimney -->
+      <rect x="700" y="280" width="40" height="80" fill="none" stroke="black" stroke-width="3"/>
+      <rect x="690" y="270" width="60" height="20" fill="none" stroke="black" stroke-width="3"/>
+      
+      <!-- Door -->
+      <rect x="550" y="550" width="100" height="150" fill="none" stroke="black" stroke-width="4"/>
+      <circle cx="630" cy="625" r="8" fill="black"/> <!-- door knob -->
+      
+      <!-- Windows -->
+      <rect x="450" y="480" width="80" height="80" fill="none" stroke="black" stroke-width="3"/>
+      <rect x="670" y="480" width="80" height="80" fill="none" stroke="black" stroke-width="3"/>
+      <line x1="490" y1="480" x2="490" y2="560" stroke="black" stroke-width="2"/>
+      <line x1="450" y1="520" x2="530" y2="520" stroke="black" stroke-width="2"/>
+      <line x1="710" y1="480" x2="710" y2="560" stroke="black" stroke-width="2"/>
+      <line x1="670" y1="520" x2="750" y2="520" stroke="black" stroke-width="2"/>
+      
+      <!-- Foundation -->
+      <rect x="380" y="700" width="440" height="30" fill="none" stroke="black" stroke-width="3"/>
+    `;
+  } else if (promptLower.includes('moses') || promptLower.includes('staff') || promptLower.includes('red sea')) {
+    // Biblical scene: Moses with staff
+    svgContent = `
+      <!-- Moses figure -->
+      <circle cx="400" cy="300" r="40" fill="none" stroke="black" stroke-width="4"/> <!-- head -->
+      <rect x="370" y="340" width="60" height="120" fill="none" stroke="black" stroke-width="4"/> <!-- robe -->
+      <line x1="400" y1="460" x2="400" y2="550" stroke="black" stroke-width="4"/> <!-- body -->
+      <line x1="370" y1="580" x2="430" y2="580" stroke="black" stroke-width="3"/> <!-- feet -->
+      
+      <!-- Staff -->
+      <line x1="320" y1="250" x2="320" y2="500" stroke="black" stroke-width="5"/>
+      <circle cx="320" cy="240" r="15" fill="none" stroke="black" stroke-width="3"/>
+      
+      <!-- Parted waters -->
+      <path d="M 150 400 Q 200 350 250 400 Q 300 450 350 400" fill="none" stroke="black" stroke-width="4"/>
+      <path d="M 650 400 Q 700 350 750 400 Q 800 450 850 400" fill="none" stroke="black" stroke-width="4"/>
+      <path d="M 150 500 Q 200 450 250 500 Q 300 550 350 500" fill="none" stroke="black" stroke-width="3"/>
+      <path d="M 650 500 Q 700 450 750 500 Q 800 550 850 500" fill="none" stroke="black" stroke-width="3"/>
+      
+      <!-- Ground -->
+      <line x1="100" y1="600" x2="1100" y2="600" stroke="black" stroke-width="3"/>
+    `;
+  } else if (promptLower.includes('daniel') || promptLower.includes('den')) {
+    // Daniel in the lion's den
+    svgContent = `
+      <!-- Daniel figure -->
+      <circle cx="600" cy="300" r="35" fill="none" stroke="black" stroke-width="4"/> <!-- head -->
+      <rect x="575" y="335" width="50" height="100" fill="none" stroke="black" stroke-width="4"/> <!-- robe -->
+      <line x1="600" y1="435" x2="600" y2="520" stroke="black" stroke-width="4"/> <!-- body -->
+      
+      <!-- Lions around Daniel -->
+      <circle cx="300" cy="450" r="60" fill="none" stroke="black" stroke-width="3"/> <!-- lion 1 head -->
+      <ellipse cx="280" cy="430" rx="15" ry="10" fill="none" stroke="black" stroke-width="2"/> <!-- eye -->
+      <ellipse cx="320" cy="430" rx="15" ry="10" fill="none" stroke="black" stroke-width="2"/> <!-- eye -->
+      
+      <circle cx="900" cy="400" r="55" fill="none" stroke="black" stroke-width="3"/> <!-- lion 2 head -->
+      <ellipse cx="880" cy="380" rx="15" ry="10" fill="none" stroke="black" stroke-width="2"/> <!-- eye -->
+      <ellipse cx="920" cy="380" rx="15" ry="10" fill="none" stroke="black" stroke-width="2"/> <!-- eye -->
+      
+      <!-- Cave walls -->
+      <path d="M 100 200 Q 150 150 200 200 L 200 700 L 100 700 Z" fill="none" stroke="black" stroke-width="4"/>
+      <path d="M 1000 200 Q 1050 150 1100 200 L 1100 700 L 1000 700 Z" fill="none" stroke="black" stroke-width="4"/>
+      
+      <!-- Ground -->
+      <line x1="100" y1="650" x2="1100" y2="650" stroke="black" stroke-width="3"/>
+    `;
+  } else if (promptLower.includes('david') || promptLower.includes('goliath')) {
+    // David and Goliath
+    svgContent = `
+      <!-- David (small figure) -->
+      <circle cx="300" cy="450" r="25" fill="none" stroke="black" stroke-width="3"/> <!-- head -->
+      <rect x="285" y="475" width="30" height="60" fill="none" stroke="black" stroke-width="3"/> <!-- body -->
+      <line x1="300" y1="535" x2="300" y2="600" stroke="black" stroke-width="3"/> <!-- legs -->
+      
+      <!-- Sling -->
+      <path d="M 270 460 Q 250 440 230 460" fill="none" stroke="black" stroke-width="2"/>
+      <circle cx="230" cy="460" r="8" fill="none" stroke="black" stroke-width="2"/>
+      
+      <!-- Goliath (large figure) -->
+      <circle cx="800" cy="250" r="50" fill="none" stroke="black" stroke-width="4"/> <!-- head -->
+      <rect x="760" y="300" width="80" height="150" fill="none" stroke="black" stroke-width="4"/> <!-- body -->
+      <line x1="800" y1="450" x2="800" y2="600" stroke="black" stroke-width="5"/> <!-- legs -->
+      
+      <!-- Shield and spear -->
+      <ellipse cx="720" cy="350" rx="30" ry="50" fill="none" stroke="black" stroke-width="3"/>
+      <line x1="880" y1="200" x2="880" y2="400" stroke="black" stroke-width="4"/>
+      
+      <!-- Ground -->
+      <line x1="100" y1="600" x2="1100" y2="600" stroke="black" stroke-width="3"/>
+    `;
+  } else if (promptLower.includes('noah') || promptLower.includes('ark')) {
+    // Noah's Ark
+    svgContent = `
+      <!-- Ark hull -->
+      <ellipse cx="600" cy="500" rx="300" ry="80" fill="none" stroke="black" stroke-width="5"/>
+      <rect x="300" y="420" width="600" height="80" fill="none" stroke="black" stroke-width="4"/>
+      
+      <!-- Ark house structure -->
+      <rect x="450" y="300" width="300" height="120" fill="none" stroke="black" stroke-width="4"/>
+      <polygon points="450,300 600,200 750,300" fill="none" stroke="black" stroke-width="4"/>
+      
+      <!-- Window -->
+      <rect x="550" y="340" width="100" height="60" fill="none" stroke="black" stroke-width="3"/>
+      
+      <!-- Animals -->
+      <!-- Elephants -->
+      <circle cx="400" cy="360" r="20" fill="none" stroke="black" stroke-width="2"/>
+      <path d="M 400 380 Q 390 400 395 420" fill="none" stroke="black" stroke-width="2"/> <!-- trunk -->
+      
+      <!-- Giraffes -->
+      <circle cx="700" cy="340" r="15" fill="none" stroke="black" stroke-width="2"/>
+      <line x1="700" y1="355" x2="700" y2="250" stroke="black" stroke-width="3"/> <!-- neck -->
+      <circle cx="700" cy="240" r="12" fill="none" stroke="black" stroke-width="2"/> <!-- head -->
+      
+      <!-- Water waves -->
+      <path d="M 100 550 Q 150 530 200 550 Q 250 570 300 550" fill="none" stroke="black" stroke-width="3"/>
+      <path d="M 900 550 Q 950 530 1000 550 Q 1050 570 1100 550" fill="none" stroke="black" stroke-width="3"/>
+    `;
+  } else {
+    // Generic biblical/story scene template
+    svgContent = `
+      <!-- Central figure -->
+      <circle cx="600" cy="350" r="40" fill="none" stroke="black" stroke-width="4"/> <!-- head -->
+      <rect x="570" y="390" width="60" height="120" fill="none" stroke="black" stroke-width="4"/> <!-- robe -->
+      <line x1="600" y1="510" x2="600" y2="600" stroke="black" stroke-width="4"/> <!-- body -->
+      
+      <!-- Background elements -->
+      <circle cx="300" cy="200" r="80" fill="none" stroke="black" stroke-width="3"/> <!-- sun -->
+      <path d="M 250 150 L 270 180 M 350 150 L 330 180 M 300 120 L 300 140 M 220 200 L 240 200 M 360 200 L 380 200" stroke="black" stroke-width="2"/> <!-- sun rays -->
+      
+      <!-- Mountains -->
+      <polygon points="150,400 250,250 350,400" fill="none" stroke="black" stroke-width="3"/>
+      <polygon points="850,400 950,300 1050,400" fill="none" stroke="black" stroke-width="3"/>
+      
+      <!-- Ground -->
+      <line x1="100" y1="600" x2="1100" y2="600" stroke="black" stroke-width="3"/>
+      
+      <!-- Decorative elements -->
+      <circle cx="200" cy="500" r="20" fill="none" stroke="black" stroke-width="2"/>
+      <circle cx="1000" cy="450" r="25" fill="none" stroke="black" stroke-width="2"/>
+    `;
+  }
+  
+  const svg = `<?xml version="1.0" encoding="UTF-8"?>
+  <svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}">
+    <rect width="100%" height="100%" fill="white"/>
+    ${svgContent}
+    
+    <!-- Border -->
+    <rect x="50" y="50" width="${width-100}" height="${height-100}" fill="none" stroke="black" stroke-width="3" rx="20"/>
+    
+    <!-- Title -->
+    <text x="${width/2}" y="100" text-anchor="middle" font-family="Arial Black, sans-serif" font-size="36" font-weight="bold" fill="black">
+      Color Me!
+    </text>
+    
+    <!-- Subject label -->
+    <text x="${width/2}" y="${height-100}" text-anchor="middle" font-family="Arial, sans-serif" font-size="24" fill="black">
+      ${prompt.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
+    </text>
+  </svg>`;
+  
+  const svgDataUrl = `data:image/svg+xml;base64,${Buffer.from(svg).toString('base64')}`;
+  return svgDataUrl;
 }
 
 async function generateColoringPagePrompt(originalPrompt: string, subject?: string, grade?: string, worksheetType?: string): Promise<string> {
