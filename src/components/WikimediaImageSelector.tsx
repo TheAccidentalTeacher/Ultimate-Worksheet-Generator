@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
+import Image from 'next/image';
 import { searchWikimediaImages } from '@/lib/api-services/wikimediaService';
+import type { WikimediaImage } from '@/lib/types';
 
 interface WikimediaImageSelectorProps {
   onSelect: (url: string) => void;
@@ -8,7 +10,7 @@ interface WikimediaImageSelectorProps {
 
 export default function WikimediaImageSelector({ onSelect, label }: WikimediaImageSelectorProps) {
   const [query, setQuery] = useState('');
-  const [images, setImages] = useState<any[]>([]);
+  const [images, setImages] = useState<WikimediaImage[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -50,7 +52,16 @@ export default function WikimediaImageSelector({ onSelect, label }: WikimediaIma
             onClick={() => onSelect(img.url)}
             title={img.title}
           >
-            <img src={img.thumb || img.url} alt={img.title} className="w-full h-32 object-cover" />
+            {/* Migrated to next/image for optimization */}
+            <Image
+              src={img.thumb || img.url}
+              alt={img.title}
+              className="w-full h-32 object-cover"
+              width={400}
+              height={128}
+              style={{ width: '100%', height: '8rem', objectFit: 'cover' }}
+              unoptimized={(img.thumb || img.url).startsWith('data:')}
+            />
             <div className="text-xs text-gray-700 p-1 bg-white/80 truncate">{img.license || ''}</div>
           </button>
         ))}

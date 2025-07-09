@@ -20,7 +20,12 @@ export async function POST(req: NextRequest) {
       timeEstimate = 'medium'
     } = await req.json();
 
-    // Create a comprehensive prompt for OpenAI
+    // [LEGACY ENDPOINT WARNING] This endpoint is deprecated and will be removed in a future release.
+    // Please use /api/generate-worksheet for all new worksheet generation requests.
+    // To disable this endpoint, set DISABLE_LEGACY_API=true in your environment.
+    if (process.env.DISABLE_LEGACY_API === 'true') {
+      return NextResponse.json({ error: 'This endpoint is disabled. Please use /api/generate-worksheet.' }, { status: 410 });
+    }
     const christianLevels = ['secular', 'gently Christian', 'moderately Christian', 'richly biblical'];
     const christianLevel = christianLevels[christianContent] || 'moderately Christian';
     
@@ -166,7 +171,7 @@ Return a JSON object with this exact structure:
       };
     }
 
-    return NextResponse.json(worksheet);
+    return NextResponse.json({ ...worksheet, legacy: true, warning: 'This endpoint is deprecated. Please use /api/generate-worksheet.' });
   } catch (error: any) {
     console.error('Error generating worksheet:', error);
     

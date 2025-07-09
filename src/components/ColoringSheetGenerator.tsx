@@ -1,9 +1,11 @@
 'use client';
 
 import React, { useState } from 'react';
+import Image from 'next/image';
 import { Loader2, Download, Eye, Sparkles, Heart, Palette } from 'lucide-react';
 import { downloadColoringSheetAsPDF, generateColoringSheetData, ColoringSheetResult } from '@/lib/coloringSheetUtils';
 import { generateColoringImage } from '@/lib/coloringImageApi';
+import type { ColoringSheetPage } from '@/lib/types';
 
 interface ColoringSheetGeneratorProps {
   theme: string;
@@ -31,7 +33,7 @@ export default function ColoringSheetGenerator({ theme, ageGroup, faithLevel }: 
   const [showPromptHistory, setShowPromptHistory] = useState(false);
 
   // Build default prompt for a page
-  const buildPrompt = (page: any) => `${page.title}: ${page.description}`;
+  const buildPrompt = (page: ColoringSheetPage) => `${page.title}: ${page.description}`;
 
   async function generateColoringSheet() {
     setLoading(true);
@@ -92,7 +94,7 @@ export default function ColoringSheetGenerator({ theme, ageGroup, faithLevel }: 
         try {
           imageUrl = await generateColoringImage(prompt);
         } catch (err: any) {
-          setError('AI image generation failed. Please check your Replicate API key or try again later.');
+          setError('Sorry, we couldn\'t generate the coloring image right now. Please try again in a few moments, or check your API key if you\'re an advanced user.');
         }
         if (!imageUrl) {
           // Fallback: use Unsplash as a backup (optional, can be improved)
@@ -114,7 +116,7 @@ export default function ColoringSheetGenerator({ theme, ageGroup, faithLevel }: 
         clearInterval(progressInterval);
       }, 500);
     } catch (error: any) {
-      setError(error?.message || 'An error occurred while generating your coloring sheet.');
+      setError('Sorry, something went wrong while generating your coloring sheet. Please try again, or contact support if the problem continues.');
       clearInterval(progressInterval);
     } finally {
       setTimeout(() => {
@@ -306,7 +308,16 @@ export default function ColoringSheetGenerator({ theme, ageGroup, faithLevel }: 
                       )}
                       {/* Show generated image */}
                       {images[index] ? (
-                        <img src={images[index]} alt={page.title} className="w-full max-w-xs border-2 border-dashed border-pink-300 rounded-lg bg-white my-2" style={{background: '#fff'}} />
+                        /* Migrated to next/image for optimization */
+                        <Image
+                          src={images[index]}
+                          alt={page.title}
+                          className="w-full max-w-xs border-2 border-dashed border-pink-300 rounded-lg bg-white my-2"
+                          width={400}
+                          height={400}
+                          style={{ background: '#fff', width: '100%', maxWidth: '20rem', border: '2px dashed #f472b6', borderRadius: '0.5rem', margin: '0.5rem 0' }}
+                          unoptimized={images[index]?.startsWith('data:')}
+                        />
                       ) : (
                         <div className="w-full h-64 flex items-center justify-center text-gray-400 italic">Image loading...</div>
                       )}

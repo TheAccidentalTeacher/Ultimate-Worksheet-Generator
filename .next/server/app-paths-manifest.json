@@ -1,4 +1,15 @@
 {
-  "/page": "app/page.js",
-  "/dashboard/page": "app/dashboard/page.js"
+  "/_not-found/page": "app/_not-found/page.js",
+  "/api/generate-advanced/route": "app/api/generate-advanced/route.js",
+  "/api/generate-coloring-image/route": "app/api/generate-coloring-image/route.js",
+  "/api/generate-worksheet/route": "app/api/generate-worksheet/route.js",
+  "/api/pixabay/route": "app/api/pixabay/route.js",
+  "/api/progress-stream/route": "app/api/progress-stream/route.js",
+  "/api/scope-sequence/route": "app/api/scope-sequence/route.js",
+  "/api/unsplash/route": "app/api/unsplash/route.js",
+  "/api/wikimedia/route": "app/api/wikimedia/route.js",
+  "/dashboard/page": "app/dashboard/page.js",
+  "/login/page": "app/login/page.js",
+  "/signup/page": "app/signup/page.js",
+  "/page": "app/page.js"
 }

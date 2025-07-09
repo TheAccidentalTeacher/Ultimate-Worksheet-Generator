@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import Image from 'next/image';
 import { listenForProgress } from '@/lib/progressService';
 import UnsplashImageSelector from './UnsplashImageSelector';
 import SubjectGradeSelector from './SubjectGradeSelector';
@@ -83,7 +84,7 @@ export default function WorksheetGenerator({ customization }: WorksheetGenerator
         }
       });
     } catch (err: any) {
-      setError(err.message || 'An error occurred while generating your worksheet');
+      setError('Sorry, something went wrong while generating your worksheet. Please try again, check your internet connection, or contact support if the problem continues.');
       setLoading(false);
     }
   }
@@ -242,7 +243,17 @@ export default function WorksheetGenerator({ customization }: WorksheetGenerator
             <UnsplashImageSelector onSelect={setSelectedImage} />
             {selectedImage && (
               <div className="mt-2">
-                <img src={selectedImage} alt="Selected Unsplash" className="w-full max-h-64 object-contain rounded-xl border" />
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                {/* Migrated to next/image for optimization */}
+                <Image
+                  src={selectedImage}
+                  alt="Selected Unsplash"
+                  className="w-full max-h-64 object-contain rounded-xl border"
+                  width={800}
+                  height={400}
+                  style={{ width: '100%', height: 'auto', maxHeight: '16rem', objectFit: 'contain', borderRadius: '0.75rem', border: '1px solid #e5e7eb' }}
+                  unoptimized={selectedImage.startsWith('data:')}
+                />
                 <div className="text-xs text-gray-500 mt-1">This image will be included as a stock photo for your worksheet.</div>
               </div>
             )}

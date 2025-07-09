@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
+import Image from 'next/image';
 import { searchUnsplashImages } from '@/lib/api-services/unsplashService';
+import type { UnsplashImage } from '@/lib/types';
 
 interface UnsplashImageSelectorProps {
   onSelect: (url: string) => void;
@@ -8,7 +10,7 @@ interface UnsplashImageSelectorProps {
 
 export default function UnsplashImageSelector({ onSelect, label }: UnsplashImageSelectorProps) {
   const [query, setQuery] = useState('');
-  const [images, setImages] = useState<any[]>([]);
+  const [images, setImages] = useState<UnsplashImage[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -50,7 +52,16 @@ export default function UnsplashImageSelector({ onSelect, label }: UnsplashImage
             onClick={() => onSelect(img.urls.small)}
             title={img.alt_description || 'Unsplash image'}
           >
-            <img src={img.urls.small} alt={img.alt_description || 'Unsplash'} className="w-full h-32 object-cover" />
+            {/* Migrated to next/image for optimization */}
+            <Image
+              src={img.urls.small}
+              alt={img.alt_description || 'Unsplash'}
+              className="w-full h-32 object-cover"
+              width={400}
+              height={128}
+              style={{ width: '100%', height: '8rem', objectFit: 'cover' }}
+              unoptimized={img.urls.small.startsWith('data:')}
+            />
           </button>
         ))}
       </div>

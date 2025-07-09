@@ -6,7 +6,7 @@ export class ContentGenerator {
     this.progressCallback = progressCallback;
   }
 
-  async generateWorksheet(userSelections: any) {
+  async generateWorksheet(userSelections: import('./types').UserSelections) {
     this.progressCallback(10, 'Analyzing educational requirements...');
     // Step 1: Assemble prompt
     const prompt = this.buildPrompt(userSelections);
@@ -97,12 +97,12 @@ export class ContentGenerator {
   
   }
 
-  buildPrompt(userSelections: any) {
+  buildPrompt(userSelections: import('./types').UserSelections) {
     // Full prompt logic from prompt-kitchen-template.md
     return `SYSTEM PROMPT (for LLM, e.g., GPT-4)\n-------------------------------------\nYou are an expert homeschool educator who creates engaging, age-appropriate worksheets.\n\nGrade Level: ${userSelections.grade}\nSubject: ${userSelections.subject}\nTopic: ${userSelections.topic}\nStyle: ${userSelections.worksheetStyle}\nChristian Content: ${userSelections.christianContent}\nScaffolding: ${userSelections.scaffolding}\nDifficulty: ${userSelections.differentiation}\nDuration: ${userSelections.timeEstimate}\n\nIMPORTANT SUBJECT-SPECIFIC GUIDELINES:\n${userSelections.subjectInfo?.specialInstructions || ''}\n\nRecommended activity types for ${userSelections.subject}: ${userSelections.subjectInfo?.activityTypes?.join(', ') || ''}\n\nFor Christian content levels:\n- Secular: No religious content\n- Gently Christian: Occasional positive biblical worldview, wholesome values\n- Moderately Christian: Regular scripture references, biblical principles woven in naturally\n- Richly Biblical: Heavy scripture integration, explicit faith connections, biblical applications\n\nReturn a JSON object with this exact structure:\n{ ... }`;
   }
 
-  async determineOptimalImageSource(asset: any, userSelections: any) {
+  async determineOptimalImageSource(asset: import('./types').WorksheetVisualAsset, userSelections: import('./types').UserSelections) {
     const { openai } = await import('./api-services/openaiService');
     const prompt = `As an expert educational content curator, analyze this visual asset request and determine the optimal source.\n\n## VISUAL ASSET DETAILS\nDescription: ${asset.description}\nPurpose: ${asset.purpose}\nEducational Context: ${userSelections.grade} grade ${userSelections.subject} about ${userSelections.topic}\n\n## AVAILABLE IMAGE SOURCES\n1. Wikimedia Commons - Best for: historical images, scientific diagrams, maps, public domain educational content\n2. Unsplash - Best for: high-quality photographs, modern settings, nature, general concepts\n3. Pixabay - Best for: illustrations, clipart, simple diagrams\n4. AI Image Generation - Best for: custom educational illustrations, coloring pages, conceptual diagrams not readily available in stock photos\n\n## SPECIAL CONSIDERATIONS\n- For K-6 grade coloring pages, AI generation is typically best\n- For historical figures/events, Wikimedia Commons usually has authentic images\n- For abstract concepts, AI generation may create the most relevant educational illustration\n- For general photographs of nature, places, or common objects, stock photos are often best\n\n## REQUIRED OUTPUT\nProvide your analysis as a JSON object with the following structure:\n{\n  "recommendedSource": "wikimedia|unsplash|pixabay|ai-generation",\n  "rationale": "Brief explanation of why this source is best",\n  "enhancedQuery": "Optimized search query for stock photo APIs",\n  "enhancedPrompt": "Optimized prompt for AI image generation",\n  "imageType": "photo|illustration|vector|all"\n}`;
     const completion = await openai.chat.completions.create({

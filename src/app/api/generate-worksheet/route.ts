@@ -19,7 +19,8 @@ export async function POST(req: NextRequest) {
   return NextResponse.json({ success: true, jobId });
 }
 
-async function startWorksheetJob(jobId: string, userSelections: any) {
+import type { UserSelections } from '../../../lib/types';
+async function startWorksheetJob(jobId: string, userSelections: UserSelections) {
   const generator = new ContentGenerator({
     progressCallback: (percentage: number, message: string) => {
       // Store progress in memory (replace with Redis/pubsub in production)
