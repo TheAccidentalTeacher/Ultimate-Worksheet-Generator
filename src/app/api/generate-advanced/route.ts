@@ -208,3 +208,84 @@ Return a JSON object with this exact structure:
     }, { status: 200 });
   }
 }
+
+// Function calling schema for structured worksheet generation
+const worksheetSchema = {
+  name: "generate_worksheet",
+  description: "Generate an educational worksheet with structured content",
+  parameters: {
+    type: "object",
+    properties: {
+      title: {
+        type: "string",
+        description: "The title of the worksheet"
+      },
+      description: {
+        type: "string", 
+        description: "Brief description of the worksheet's learning objectives"
+      },
+      instructions: {
+        type: "string",
+        description: "Clear instructions for students"
+      },
+      problems: {
+        type: "array",
+        description: "Array of problems/questions",
+        items: {
+          type: "object",
+          properties: {
+            question: { type: "string", description: "The question text" },
+            type: { 
+              type: "string", 
+              enum: ["multiple-choice", "short-answer", "fill-blank", "math", "true-false", "matching"],
+              description: "Type of question"
+            },
+            options: {
+              type: "array",
+              items: { type: "string" },
+              description: "Options for multiple choice questions"
+            },
+            answer: { type: "string", description: "Correct answer" },
+            points: { type: "number", description: "Points for this question" },
+            difficulty: {
+              type: "string",
+              enum: ["easy", "medium", "hard"],
+              description: "Difficulty level"
+            }
+          },
+          required: ["question", "type", "answer"]
+        }
+      },
+      visualAssets: {
+        type: "array",
+        description: "Visual elements needed for the worksheet",
+        items: {
+          type: "object",
+          properties: {
+            description: { type: "string", description: "What image is needed" },
+            searchQuery: { type: "string", description: "Search terms for finding the image" },
+            placement: { type: "string", description: "Where to place this image" }
+          }
+        }
+      },
+      answerKey: {
+        type: "object",
+        description: "Answer key with explanations",
+        properties: {
+          answers: {
+            type: "array",
+            items: {
+              type: "object",
+              properties: {
+                questionNumber: { type: "number" },
+                answer: { type: "string" },
+                explanation: { type: "string" }
+              }
+            }
+          }
+        }
+      }
+    },
+    required: ["title", "description", "instructions", "problems"]
+  }
+};

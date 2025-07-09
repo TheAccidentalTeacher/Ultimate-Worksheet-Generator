@@ -19,6 +19,12 @@ export class ContentGenerator {
     let worksheetContent;
     try {
       console.log('[GENERATOR] Calling OpenAI with prompt length:', prompt.length);
+      
+      // Check if API key is configured
+      if (!process.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY === 'dummy-key-for-build' || process.env.OPENAI_API_KEY === 'your_openai_api_key_here') {
+        throw new Error('OpenAI API key is not configured. Please set a valid OPENAI_API_KEY environment variable.');
+      }
+      
       const completion = await openai.chat.completions.create({
         model: 'gpt-4o',
         messages: [
@@ -33,8 +39,20 @@ export class ContentGenerator {
       this.progressCallback(40, 'Processing worksheet structure...');
     } catch (err: any) {
       console.error('[GENERATOR] OpenAI API error:', err);
-      this.progressCallback(100, 'Error: ' + (err.message || 'Failed to generate worksheet'));
-      throw err;
+      let errorMessage = 'Failed to generate worksheet';
+      
+      if (err.message?.includes('API key')) {
+        errorMessage = 'OpenAI API key is not configured. Please check your environment variables.';
+      } else if (err.code === 'insufficient_quota') {
+        errorMessage = 'OpenAI API quota exceeded. Please check your billing.';
+      } else if (err.code === 'invalid_api_key') {
+        errorMessage = 'Invalid OpenAI API key. Please check your configuration.';
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+      
+      this.progressCallback(100, 'Error: ' + errorMessage);
+      throw new Error(errorMessage);
     }
     
     // Step 3: Parse and validate
@@ -167,7 +185,7 @@ Return a JSON object with this exact structure:
   "materials": ["Materials needed for the entire worksheet"]
 }
 
-Create exactly ${userSelections.numProblems || 5} problems/activities. Make sure each problem is educational, age-appropriate, and engaging.`;
+Create exactly ${userSelections.numProblems || 5} ${userSelections.numProblems === 1 ? 'activity' : 'problems/activities'}. ${userSelections.numProblems === 1 ? 'Since this is a single-item worksheet, make the activity comprehensive and engaging, potentially with multiple parts or steps.' : 'Make sure each problem is educational, age-appropriate, and engaging.'}`;
 
     console.log('[PROMPT] Generated prompt length:', prompt.length);
     return prompt;

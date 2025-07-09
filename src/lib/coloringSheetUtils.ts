@@ -13,7 +13,6 @@ export interface ColoringSheetResult {
     christianConnection?: string;
     coloringTips?: string[];
   }>;
-  activities?: string[];
   materials: string[];
 }
 
@@ -373,54 +372,6 @@ export const downloadColoringSheetAsPDF = (coloringSheet: ColoringSheetResult, i
             font-size: 14px;
           }
           
-          .activities {
-            background: linear-gradient(135deg, #FFF9E6, #FFE4E1);
-            border-radius: 20px;
-            padding: 25px;
-            margin: 30px 0;
-            border: 3px solid #FFEAA7;
-            position: relative;
-          }
-          
-          .activities::before {
-            content: "🎭";
-            position: absolute;
-            top: -15px;
-            left: 30px;
-            background: white;
-            padding: 5px;
-            border-radius: 50%;
-            font-size: 24px;
-          }
-          
-          .activities h3 {
-            font-family: 'Fredoka One', cursive;
-            color: #E17055;
-            margin-bottom: 15px;
-            font-size: 20px;
-          }
-          
-          .activities ul {
-            list-style: none;
-            padding: 0;
-          }
-          
-          .activities li {
-            color: #2D1B69;
-            font-size: 16px;
-            line-height: 1.6;
-            margin-bottom: 10px;
-            position: relative;
-            padding-left: 30px;
-          }
-          
-          .activities li::before {
-            content: "⭐";
-            position: absolute;
-            left: 0;
-            font-size: 16px;
-          }
-          
           .materials {
             background: linear-gradient(135deg, #E6F3FF, #FFE4E1);
             border-radius: 15px;
@@ -560,15 +511,6 @@ export const downloadColoringSheetAsPDF = (coloringSheet: ColoringSheetResult, i
             ` : ''}
           </div>
         `).join('')}
-        
-        ${coloringSheet.activities ? `
-          <div class="activities">
-            <h3>Fun Activities to Try! 🎭</h3>
-            <ul>
-              ${coloringSheet.activities.map(activity => `<li>${activity}</li>`).join('')}
-            </ul>
-          </div>
-        ` : ''}
         
         <div class="materials">
           <h4>What You'll Need 🎨</h4>
@@ -771,13 +713,6 @@ export const generateColoringSheetData = (theme: string, ageGroup: string, faith
         "Remember: your coloring is perfect just the way you make it!"
       ]
     })),
-    activities: [
-      "Create a story about your colored pictures",
-      "Show your artwork to family and friends",
-      "Make up names for the characters you colored",
-      "Draw your own pictures inspired by these coloring pages",
-      "Create a coloring book display area in your room"
-    ],
     materials: [
       "Colored pencils",
       "Crayons", 

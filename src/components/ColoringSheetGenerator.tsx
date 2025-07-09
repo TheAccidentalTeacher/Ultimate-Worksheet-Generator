@@ -35,7 +35,7 @@ export default function ColoringSheetGenerator({ theme, ageGroup, faithLevel }: 
   // Build default prompt for a page
   const buildPrompt = (page: ColoringSheetPage) => `${page.title}: ${page.description}`;
 
-  async function generateColoringSheet() {
+  const generateColoringSheet = React.useCallback(async function() {
     setLoading(true);
     setError(null);
     setProgress(0);
@@ -92,19 +92,25 @@ export default function ColoringSheetGenerator({ theme, ageGroup, faithLevel }: 
         ]);
         let imageUrl = null;
         try {
-          imageUrl = await generateColoringImage(prompt);
+          // Always prefer DALL-E for coloring books to get actual line art
+          imageUrl = await generateColoringImage(prompt, true);
         } catch (err: any) {
-          setError('Sorry, we couldn\'t generate the coloring image right now. Please try again in a few moments, or check your API key if you\'re an advanced user.');
+          console.log('[COLORING] Image generation failed, trying fallback:', err.message);
+          // Continue without failing the whole process
         }
         if (!imageUrl) {
-          // Fallback: use Unsplash as a backup (optional, can be improved)
+          // Fallback: use a placeholder or skip image generation
           try {
             const res = await fetch(`/api/unsplash?query=${encodeURIComponent(prompt)}`);
             if (res.ok) {
               const data = await res.json();
-              imageUrl = data[0]?.url || '';
+              imageUrl = data.results?.[0]?.urls?.regular || '';
             }
-          } catch {}
+          } catch (fallbackErr) {
+            console.log('[COLORING] Unsplash fallback also failed, using placeholder');
+            // Use a placeholder image or empty string
+            imageUrl = '';
+          }
         }
         imageUrls.push(imageUrl || '');
         setProgress(p => Math.min(95, p + 5));
@@ -116,7 +122,8 @@ export default function ColoringSheetGenerator({ theme, ageGroup, faithLevel }: 
         clearInterval(progressInterval);
       }, 500);
     } catch (error: any) {
-      setError('Sorry, something went wrong while generating your coloring sheet. Please try again, or contact support if the problem continues.');
+      console.error('[COLORING] Error generating coloring sheet:', error);
+      setError('Sorry, something went wrong while generating your coloring sheet. The basic structure was created, but images may be missing.');
       clearInterval(progressInterval);
     } finally {
       setTimeout(() => {
@@ -124,7 +131,7 @@ export default function ColoringSheetGenerator({ theme, ageGroup, faithLevel }: 
         setProgress(0);
       }, 600);
     }
-  }
+  }, [theme, ageGroup, faithLevel]);
 
   const handleDownloadPDF = () => {
     if (result) {
@@ -156,7 +163,7 @@ export default function ColoringSheetGenerator({ theme, ageGroup, faithLevel }: 
       },
     ]);
     // Regenerate image for this page
-    const imageUrl = await generateColoringImage(newPrompt);
+    const imageUrl = await generateColoringImage(newPrompt, true);
     setImages(imgs => imgs.map((old, i) => (i === idx ? (imageUrl || '') : old)));
   };
 
@@ -164,7 +171,7 @@ export default function ColoringSheetGenerator({ theme, ageGroup, faithLevel }: 
     if (theme && ageGroup) {
       generateColoringSheet();
     }
-  }, [theme, ageGroup, faithLevel]);
+  }, [theme, ageGroup, faithLevel, generateColoringSheet]);
 
   return (
     <div className="space-y-6 min-w-0 max-w-full">
@@ -319,7 +326,13 @@ export default function ColoringSheetGenerator({ theme, ageGroup, faithLevel }: 
                           unoptimized={images[index]?.startsWith('data:')}
                         />
                       ) : (
-                        <div className="w-full h-64 flex items-center justify-center text-gray-400 italic">Image loading...</div>
+                        <div className="w-full max-w-xs h-64 flex flex-col items-center justify-center text-gray-400 italic bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg my-2">
+                          <div className="text-6xl mb-2">🎨</div>
+                          <div className="text-center px-4">
+                            <p className="text-sm">Image generation unavailable</p>
+                            <p className="text-xs text-gray-500 mt-1">The coloring page structure is ready for you to print and color!</p>
+                          </div>
+                        </div>
                       )}
                       <div className="flex flex-wrap gap-2 mt-2 min-w-0 max-w-full">
                         {page.elements.slice(0, 3).map((element, i) => (
@@ -345,24 +358,6 @@ export default function ColoringSheetGenerator({ theme, ageGroup, faithLevel }: 
                   ))}
                 </div>
               </div>
-
-              {/* Activities Preview */}
-              {result.activities && (
-                <div className="mt-6 bg-yellow-50 border border-yellow-200 rounded-xl p-4">
-                  <h4 className="font-semibold text-gray-800 mb-2 flex items-center">
-                    <span className="text-lg mr-2">🎭</span>
-                    Bonus Activities
-                  </h4>
-                  <ul className="text-sm text-gray-700 space-y-1 pl-4 break-words">
-                    {result.activities.slice(0, 3).map((activity, i) => (
-                      <li key={i} className="flex items-center">
-                        <span className="text-yellow-500 mr-2">⭐</span>
-                        {activity}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
             </div>
 
             {/* Download Actions */}

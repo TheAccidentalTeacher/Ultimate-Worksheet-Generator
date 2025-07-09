@@ -1,12 +1,18 @@
 import OpenAI from 'openai';
 
-if (!process.env.OPENAI_API_KEY) {
+// Check for API key
+const apiKey = process.env.OPENAI_API_KEY;
+
+if (!apiKey) {
   console.error('[OPENAI] OPENAI_API_KEY environment variable is not set');
-  throw new Error('OpenAI API key is not configured. Please set OPENAI_API_KEY environment variable.');
+  // Don't throw in build time, allow runtime handling
+  if (typeof window === 'undefined' && process.env.NODE_ENV === 'production') {
+    console.warn('[OPENAI] OpenAI service will not work without API key');
+  }
 }
 
 export const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
+  apiKey: apiKey || 'dummy-key-for-build',
 });
 
-console.log('[OPENAI] OpenAI service initialized with API key:', process.env.OPENAI_API_KEY?.substring(0, 20) + '...');
+console.log('[OPENAI] OpenAI service initialized with API key:', apiKey ? `${apiKey.substring(0, 7)}...` : 'NOT SET');

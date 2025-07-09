@@ -6,6 +6,7 @@ import { listenForProgress } from '@/lib/progressService';
 import UnsplashImageSelector from './UnsplashImageSelector';
 import SubjectGradeSelector from './SubjectGradeSelector';
 import ScopeSequenceSuggestion from './ScopeSequenceSuggestion';
+import APIErrorHandler from './APIErrorHandler';
 import { Send, Loader2, Download, Eye, Sparkles, BookOpen, Heart, Target, Clock, FileText } from 'lucide-react';
 import { downloadAsPDF, downloadAsWord, WorksheetResult } from '@/lib/downloadUtils';
 
@@ -223,12 +224,11 @@ export default function WorksheetGenerator({ customization }: WorksheetGenerator
 
       {/* Error Message */}
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-xl p-4">
-          <div className="flex items-center">
-            <div className="text-red-600 mr-3">⚠️</div>
-            <div className="text-red-800 font-medium">{error}</div>
-          </div>
-        </div>
+        <APIErrorHandler 
+          error={error} 
+          service={error.includes('API key') ? 'openai' : 'general'} 
+          onRetry={() => generateWorksheet()}
+        />
       )}
 
       {/* Results */}
@@ -278,7 +278,10 @@ export default function WorksheetGenerator({ customization }: WorksheetGenerator
                     </span>
                     <span className="flex items-center">
                       <FileText className="h-4 w-4 mr-1" />
-                      {(result.problems && Array.isArray(result.problems)) ? result.problems.length : 0} problems
+                      {(() => {
+                        const problemCount = (result.problems && Array.isArray(result.problems)) ? result.problems.length : 0;
+                        return problemCount === 1 ? '1 item' : `${problemCount} items`;
+                      })()}
                     </span>
                   </div>
                 </div>
@@ -326,7 +329,12 @@ export default function WorksheetGenerator({ customization }: WorksheetGenerator
 
             {/* Problems */}
             <div className="mb-6">
-              <h4 className="text-lg font-semibold text-gray-900 mb-4">Problems & Activities</h4>
+              <h4 className="text-lg font-semibold text-gray-900 mb-4">
+                {(() => {
+                  const problemCount = (result.problems && Array.isArray(result.problems)) ? result.problems.length : 0;
+                  return problemCount === 1 ? 'Activity' : 'Problems & Activities';
+                })()}
+              </h4>
               <div className="space-y-4 min-w-0 max-w-full">
                 {(result.problems && Array.isArray(result.problems) ? result.problems : []).map((problem, index) => (
                   <div key={problem.id || index} className="border border-gray-200 rounded-lg p-4 bg-gray-50">
