@@ -72,55 +72,23 @@ export class ContentGenerator {
       throw new Error('Invalid JSON from LLM');
     }
     this.progressCallback(50, 'Planning visual assets...');
-    // Step 4: Visual asset selection (intelligent, robust)
+    // Step 4: Visual asset selection (simplified to avoid photo APIs)
     if (worksheet && worksheet.visualAssets && Array.isArray(worksheet.visualAssets)) {
-      const { searchUnsplashImages } = await import('./api-services/unsplashService');
-      const { searchWikimediaImages } = await import('./api-services/wikimediaService');
-      const { searchPixabayImages } = await import('./api-services/pixabayService');
       const { generateAiImage } = await import('./api-services/imageGenerationService');
       for (let i = 0; i < worksheet.visualAssets.length; i++) {
         const asset = worksheet.visualAssets[i];
         this.progressCallback(55 + Math.floor((i * 30) / worksheet.visualAssets.length), `Preparing visual asset ${i + 1} of ${worksheet.visualAssets.length}...`);
-        const sourceDecision = await this.determineOptimalImageSource(asset, userSelections);
+        
+        // Simplified: Use AI generation only for worksheet images
         let imageResult;
-        if (sourceDecision.recommendedSource === 'ai-generation') {
-          imageResult = await generateAiImage(sourceDecision.enhancedPrompt);
+        try {
+          imageResult = await generateAiImage(asset.description || asset.query);
           asset.imageUrl = imageResult.url;
           asset.source = 'AI Generated';
-        } else if (sourceDecision.recommendedSource === 'wikimedia') {
-          const wikimediaResults = await searchWikimediaImages(sourceDecision.enhancedQuery);
-          if (wikimediaResults.length > 0) {
-            asset.imageUrl = wikimediaResults[0].url;
-            asset.source = 'Wikimedia Commons';
-            asset.attribution = wikimediaResults[0].author;
-            asset.license = wikimediaResults[0].license;
-          } else {
-            imageResult = await generateAiImage(sourceDecision.enhancedPrompt);
-            asset.imageUrl = imageResult.url;
-            asset.source = 'AI Generated (Wikimedia fallback)';
-          }
-        } else if (sourceDecision.recommendedSource === 'unsplash') {
-          const unsplashResults = await searchUnsplashImages(sourceDecision.enhancedQuery);
-          if (unsplashResults.length > 0) {
-            asset.imageUrl = unsplashResults[0].url;
-            asset.source = 'Unsplash';
-            asset.attribution = unsplashResults[0].photographer;
-            asset.attributionUrl = unsplashResults[0].photographerUrl;
-          } else {
-            imageResult = await generateAiImage(sourceDecision.enhancedPrompt);
-            asset.imageUrl = imageResult.url;
-            asset.source = 'AI Generated (Unsplash fallback)';
-          }
-        } else if (sourceDecision.recommendedSource === 'pixabay') {
-          const pixabayResults = await searchPixabayImages(sourceDecision.enhancedQuery, sourceDecision.imageType, 3);
-          if (pixabayResults.length > 0) {
-            asset.imageUrl = pixabayResults[0].url;
-            asset.source = 'Pixabay';
-          } else {
-            imageResult = await generateAiImage(sourceDecision.enhancedPrompt);
-            asset.imageUrl = imageResult.url;
-            asset.source = 'AI Generated (Pixabay fallback)';
-          }
+        } catch (error) {
+          console.warn(`[GENERATOR] Failed to generate image for ${asset.description}:`, error);
+          asset.imageUrl = '';
+          asset.source = 'Placeholder';
         }
       }
     }
