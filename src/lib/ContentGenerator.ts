@@ -94,31 +94,7 @@ export class ContentGenerator {
     await this.sleep(300);
     this.progressCallback(100, 'Worksheet ready!');
     return worksheet;
-  async determineOptimalImageSource(asset: any, userSelections: any) {
-    const { openai } = await import('./api-services/openaiService');
-    const prompt = `As an expert educational content curator, analyze this visual asset request and determine the optimal source.\n\n## VISUAL ASSET DETAILS\nDescription: ${asset.description}\nPurpose: ${asset.purpose}\nEducational Context: ${userSelections.grade} grade ${userSelections.subject} about ${userSelections.topic}\n\n## AVAILABLE IMAGE SOURCES\n1. Wikimedia Commons - Best for: historical images, scientific diagrams, maps, public domain educational content\n2. Unsplash - Best for: high-quality photographs, modern settings, nature, general concepts\n3. Pixabay - Best for: illustrations, clipart, simple diagrams\n4. AI Image Generation - Best for: custom educational illustrations, coloring pages, conceptual diagrams not readily available in stock photos\n\n## SPECIAL CONSIDERATIONS\n- For K-6 grade coloring pages, AI generation is typically best\n- For historical figures/events, Wikimedia Commons usually has authentic images\n- For abstract concepts, AI generation may create the most relevant educational illustration\n- For general photographs of nature, places, or common objects, stock photos are often best\n\n## REQUIRED OUTPUT\nProvide your analysis as a JSON object with the following structure:\n{\n  "recommendedSource": "wikimedia|unsplash|pixabay|ai-generation",\n  "rationale": "Brief explanation of why this source is best",\n  "enhancedQuery": "Optimized search query for stock photo APIs",\n  "enhancedPrompt": "Optimized prompt for AI image generation",\n  "imageType": "photo|illustration|vector|all"\n}`;
-    const completion = await openai.chat.completions.create({
-      model: 'gpt-4o',
-      messages: [
-        { role: 'system', content: prompt }
-      ],
-      response_format: { type: 'json_object' },
-      max_tokens: 500,
-      temperature: 0.3
-    });
-    try {
-      return JSON.parse(completion.choices[0]?.message?.content || '{}');
-    } catch (error) {
-      // Fallback to AI generation if parsing fails
-      return {
-        recommendedSource: 'ai-generation',
-        rationale: 'Fallback due to decision processing error',
-        enhancedQuery: asset.description,
-        enhancedPrompt: `Educational illustration for ${userSelections.grade} grade ${userSelections.subject} about ${asset.description}. ${asset.purpose}`,
-        imageType: 'all'
-      };
-    }
-  }
+  
   }
 
   buildPrompt(userSelections: any) {
@@ -152,6 +128,8 @@ export class ContentGenerator {
       };
     }
   }
+
+
 
   sleep(ms: number) {
     return new Promise(resolve => setTimeout(resolve, ms));
