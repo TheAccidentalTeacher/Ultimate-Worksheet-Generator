@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 const UNSPLASH_ACCESS_KEY = process.env.UNSPLASH_ACCESS_KEY;
 const PIXABAY_API_KEY = process.env.PIXABAY_API_KEY;
+const REPLICATE_API_TOKEN = process.env.REPLICATE_API_TOKEN;
 
 export async function POST(req: NextRequest) {
   try {
@@ -16,6 +17,7 @@ export async function POST(req: NextRequest) {
     console.log('OPENAI_API_KEY available:', !!OPENAI_API_KEY);
     console.log('UNSPLASH_ACCESS_KEY available:', !!UNSPLASH_ACCESS_KEY);
     console.log('PIXABAY_API_KEY available:', !!PIXABAY_API_KEY);
+    console.log('REPLICATE_API_TOKEN available:', !!REPLICATE_API_TOKEN);
 
     // If DALL-E is specifically requested, try it first
     if (preferDalle && OPENAI_API_KEY && OPENAI_API_KEY !== 'your-openai-api-key-here' && OPENAI_API_KEY.length > 10) {
@@ -40,7 +42,23 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Try Pixabay for line art/coloring pages first
+    // Try Stable Diffusion via Replicate for high-quality coloring pages
+    if (REPLICATE_API_TOKEN && REPLICATE_API_TOKEN !== 'your_replicate_api_token_here' && REPLICATE_API_TOKEN.length > 10) {
+      console.log('Attempting Stable Diffusion via Replicate for coloring pages...');
+      try {
+        const imageUrl = await generateStableDiffusionColoringPage(prompt);
+        if (imageUrl) {
+          console.log('Stable Diffusion success:', imageUrl);
+          return NextResponse.json({ imageUrl, source: 'stable-diffusion' });
+        }
+      } catch (error) {
+        console.error('Stable Diffusion failed:', error);
+      }
+    } else {
+      console.log('Skipping Stable Diffusion - API token not configured properly');
+    }
+
+    // Try Pixabay for line art/coloring pages
     if (PIXABAY_API_KEY && PIXABAY_API_KEY !== 'your-pixabay-api-key-here' && PIXABAY_API_KEY.length > 10) {
       console.log('Attempting Pixabay for coloring page images...');
       try {
@@ -379,6 +397,79 @@ async function generateSimpleSVGColoringPage(prompt: string): Promise<string | n
     
   } catch (error) {
     console.error('SVG generation error:', error);
+    return null;
+  }
+}
+
+async function generateStableDiffusionColoringPage(prompt: string): Promise<string | null> {
+  try {
+    console.log('Generating Stable Diffusion coloring page for prompt:', prompt);
+    
+    // Optimized prompt for coloring book style images
+    const coloringPrompt = `coloring book page, ${prompt}, black and white line art, thick black outlines, no shading, no color, simple clean lines, white background, suitable for children to color, detailed but not cluttered, vector style illustration`;
+    
+    const response = await fetch('https://api.replicate.com/v1/predictions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Token ${REPLICATE_API_TOKEN}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        version: 'ac732df83cea7fff18b8472768c88ad041fa750ff7682a21affe81863cbe77e4', // Stable Diffusion XL
+        input: {
+          prompt: coloringPrompt,
+          negative_prompt: 'color, colored, shading, shadows, gradients, complex details, photorealistic, blurry, low quality',
+          width: 1024,
+          height: 1024,
+          num_inference_steps: 20,
+          guidance_scale: 7.5,
+          scheduler: 'K_EULER'
+        }
+      })
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Replicate API error:', response.status, errorText);
+      throw new Error(`Replicate API error: ${response.status}`);
+    }
+
+    const prediction = await response.json();
+    console.log('Stable Diffusion prediction created:', prediction.id);
+
+    // Poll for completion (with timeout)
+    let attempts = 0;
+    const maxAttempts = 30; // 30 seconds max
+    
+    while (prediction.status !== 'succeeded' && prediction.status !== 'failed' && attempts < maxAttempts) {
+      await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1 second
+      
+      const statusResponse = await fetch(`https://api.replicate.com/v1/predictions/${prediction.id}`, {
+        headers: {
+          'Authorization': `Token ${REPLICATE_API_TOKEN}`,
+        }
+      });
+      
+      if (statusResponse.ok) {
+        const updatedPrediction = await statusResponse.json();
+        Object.assign(prediction, updatedPrediction);
+        console.log('Stable Diffusion status:', prediction.status);
+      }
+      
+      attempts++;
+    }
+
+    if (prediction.status === 'succeeded' && prediction.output && prediction.output.length > 0) {
+      const imageUrl = prediction.output[0];
+      console.log('Stable Diffusion completed successfully:', imageUrl);
+      return imageUrl;
+    } else {
+      console.error('Stable Diffusion failed or timed out:', prediction.status, prediction.error);
+      return null;
+    }
+
+  } catch (error) {
+    console.error('Stable Diffusion generation error:', error instanceof Error ? error.message : error);
     return null;
   }
 }
