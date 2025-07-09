@@ -1,7 +1,6 @@
 
 [build]
   command = "npm run build"
-  publish = ".next"
 
 # Use the official Netlify Next.js plugin
 [[plugins]]
