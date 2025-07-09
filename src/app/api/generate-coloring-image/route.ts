@@ -16,15 +16,14 @@ export async function POST(req: NextRequest) {
     console.log('OPENAI_API_KEY available:', !!OPENAI_API_KEY);
     console.log('UNSPLASH_ACCESS_KEY available:', !!UNSPLASH_ACCESS_KEY);
     console.log('PIXABAY_API_KEY available:', !!PIXABAY_API_KEY);
-    console.log('PIXABAY_API_KEY available:', !!PIXABAY_API_KEY);
 
     // If DALL-E is specifically requested, try it first
     if (preferDalle && OPENAI_API_KEY && OPENAI_API_KEY !== 'your-openai-api-key-here' && OPENAI_API_KEY.length > 10) {
       console.log('Attempting DALL-E 3 image generation (preferred)...');
       try {
-        // More reasonable timeout for DALL-E 3 - it needs time to generate quality images
+        // Reduced timeout for serverless environment (Netlify Functions have 10s limit on hobby plan)
         const timeoutPromise = new Promise<never>((_, reject) =>
-          setTimeout(() => reject(new Error('DALL-E timeout after 30 seconds')), 30000)
+          setTimeout(() => reject(new Error('DALL-E timeout after 8 seconds')), 8000)
         );
         
         const dallePromise = generateDallE3Image(prompt);
@@ -41,20 +40,42 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Primary: Use Unsplash for reliable, fast images
-    if (UNSPLASH_ACCESS_KEY && UNSPLASH_ACCESS_KEY !== 'your-unsplash-access-key-here' && UNSPLASH_ACCESS_KEY.length > 10) {
-      console.log('Attempting Unsplash image search (primary)...');
+    // Try Pixabay for line art/coloring pages first
+    if (PIXABAY_API_KEY && PIXABAY_API_KEY !== 'your-pixabay-api-key-here' && PIXABAY_API_KEY.length > 10) {
+      console.log('Attempting Pixabay for coloring page images...');
       try {
-        const imageUrl = await getUnsplashImage(prompt);
+        const imageUrl = await getPixabayColoringPage(prompt);
         if (imageUrl) {
-          console.log('Unsplash success:', imageUrl);
-          return NextResponse.json({ imageUrl, source: 'unsplash' });
+          console.log('Pixabay coloring page success:', imageUrl);
+          return NextResponse.json({ imageUrl, source: 'pixabay-coloring' });
         }
       } catch (error) {
-        console.error('Unsplash failed:', error);
+        console.error('Pixabay coloring page search failed:', error);
       }
-    } else {
-      console.log('Skipping Unsplash - access key not configured properly');
+    }
+
+    // Try OpenClipart for line art
+    console.log('Attempting OpenClipart for vector line art...');
+    try {
+      const imageUrl = await getOpenClipartImage(prompt);
+      if (imageUrl) {
+        console.log('OpenClipart success:', imageUrl);
+        return NextResponse.json({ imageUrl, source: 'openclipart' });
+      }
+    } catch (error) {
+      console.error('OpenClipart failed:', error);
+    }
+
+    // Try Wikimedia Commons for line art
+    console.log('Attempting Wikimedia Commons for line drawings...');
+    try {
+      const imageUrl = await getWikimediaLineArt(prompt);
+      if (imageUrl) {
+        console.log('Wikimedia line art success:', imageUrl);
+        return NextResponse.json({ imageUrl, source: 'wikimedia-lineart' });
+      }
+    } catch (error) {
+      console.error('Wikimedia line art failed:', error);
     }
 
     // If DALL-E wasn't preferred but Unsplash failed, try DALL-E as fallback
@@ -62,7 +83,7 @@ export async function POST(req: NextRequest) {
       console.log('Attempting DALL-E 3 as fallback...');
       try {
         const timeoutPromise = new Promise<never>((_, reject) =>
-          setTimeout(() => reject(new Error('DALL-E fallback timeout after 30 seconds')), 30000)
+          setTimeout(() => reject(new Error('DALL-E fallback timeout after 8 seconds')), 8000)
         );
         
         const dallePromise = generateDallE3Image(prompt);
@@ -78,20 +99,16 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // As a last resort, use Pixabay if configured
-    if (PIXABAY_API_KEY && PIXABAY_API_KEY !== 'your-pixabay-api-key-here' && PIXABAY_API_KEY.length > 10) {
-      console.log('Attempting Pixabay image search (fallback)...');
-      try {
-        const imageUrl = await getPixabayImage(prompt);
-        if (imageUrl) {
-          console.log('Pixabay success:', imageUrl);
-          return NextResponse.json({ imageUrl, source: 'pixabay' });
-        }
-      } catch (error) {
-        console.error('Pixabay failed:', error);
+    // Generate a simple SVG coloring page as last resort
+    console.log('Generating simple SVG coloring page as final fallback...');
+    try {
+      const svgUrl = await generateSimpleSVGColoringPage(prompt);
+      if (svgUrl) {
+        console.log('Simple SVG coloring page generated:', svgUrl);
+        return NextResponse.json({ imageUrl: svgUrl, source: 'svg-generated' });
       }
-    } else {
-      console.log('Skipping Pixabay - access key not configured properly');
+    } catch (error) {
+      console.error('SVG generation failed:', error);
     }
 
     console.error('All image generation services failed or unavailable');
@@ -181,37 +198,187 @@ async function generateDallE3Image(prompt: string): Promise<string | null> {
   }
 }
 
-async function getPixabayImage(prompt: string): Promise<string | null> {
-  // Search for line art or illustration style images
-  const searchQuery = `${prompt} line art illustration drawing`.replace(/[^a-zA-Z0-9\s]/g, '').trim();
-  const url = `https://pixabay.com/api/?key=${PIXABAY_API_KEY}&q=${encodeURIComponent(searchQuery)}&image_type=illustration&category=backgrounds&per_page=3&safesearch=true`;
+async function getPixabayColoringPage(prompt: string): Promise<string | null> {
+  // Search specifically for coloring page, line art, and black and white images
+  const coloringTerms = ['coloring page', 'line art', 'outline', 'black white drawing', 'sketch'];
+  const searchQuery = `${prompt} ${coloringTerms.join(' OR ')}`
+    .replace(/[^a-zA-Z0-9\s]/g, '').trim();
   
-  console.log('Pixabay search query:', searchQuery);
+  const url = `https://pixabay.com/api/?key=${PIXABAY_API_KEY}&q=${encodeURIComponent(searchQuery)}&image_type=vector&category=backgrounds&per_page=10&safesearch=true&colors=black_white`;
+  
+  console.log('Pixabay coloring page search query:', searchQuery);
   
   const response = await fetch(url);
   if (!response.ok) {
     console.error('Pixabay API error:', response.status, response.statusText);
-    const errorText = await response.text();
-    console.error('Pixabay error details:', errorText);
     return null;
   }
   
   const data = await response.json();
-  console.log('Pixabay response:', data.total, 'results found');
+  console.log('Pixabay coloring page response:', data.total, 'results found');
   
   if (data.hits && data.hits.length > 0) {
-    // Prefer line art/simple illustrations
-    const lineArtImage = data.hits.find((hit: any) => 
-      hit.tags.toLowerCase().includes('line') || 
-      hit.tags.toLowerCase().includes('drawing') ||
-      hit.tags.toLowerCase().includes('outline')
-    );
+    // Prefer images with coloring-related keywords
+    const coloringImage = data.hits.find((hit: any) => {
+      const tags = hit.tags.toLowerCase();
+      return tags.includes('line') || tags.includes('outline') || 
+             tags.includes('coloring') || tags.includes('black') ||
+             tags.includes('drawing') || tags.includes('sketch');
+    });
     
-    const selectedImage = lineArtImage || data.hits[0];
+    const selectedImage = coloringImage || data.hits[0];
     const imageUrl = selectedImage?.webformatURL;
-    console.log('Selected Pixabay image:', imageUrl);
+    console.log('Selected Pixabay coloring image:', imageUrl);
     return imageUrl;
   }
   
   return null;
+}
+
+async function getOpenClipartImage(prompt: string): Promise<string | null> {
+  // OpenClipart provides free vector line art perfect for coloring
+  const searchQuery = prompt.replace(/[^a-zA-Z0-9\s]/g, '').trim();
+  const url = `https://openclipart.org/search/json/?query=${encodeURIComponent(searchQuery)}&amount=10&page=1`;
+  
+  console.log('OpenClipart search query:', searchQuery);
+  
+  const response = await fetch(url);
+  if (!response.ok) {
+    console.error('OpenClipart API error:', response.status, response.statusText);
+    return null;
+  }
+  
+  const data = await response.json();
+  console.log('OpenClipart response:', data.info?.results || 0, 'results found');
+  
+  if (data.payload && data.payload.length > 0) {
+    // Get a random result for variety
+    const randomIndex = Math.floor(Math.random() * Math.min(data.payload.length, 5));
+    const selectedImage = data.payload[randomIndex];
+    
+    // OpenClipart provides SVG which is perfect for line art
+    const imageUrl = selectedImage?.svg?.png_full_lossy || selectedImage?.svg?.url;
+    console.log('Selected OpenClipart image:', imageUrl);
+    return imageUrl;
+  }
+  
+  return null;
+}
+
+async function getWikimediaLineArt(prompt: string): Promise<string | null> {
+  // Search Wikimedia Commons for line drawings and illustrations
+  const searchQuery = `${prompt} line drawing illustration`.replace(/[^a-zA-Z0-9\s]/g, '').trim();
+  const url = `https://commons.wikimedia.org/w/api.php?action=query&format=json&list=search&srsearch=${encodeURIComponent(searchQuery)}&srnamespace=6&srlimit=10&origin=*`;
+  
+  console.log('Wikimedia line art search query:', searchQuery);
+  
+  const response = await fetch(url);
+  if (!response.ok) {
+    console.error('Wikimedia API error:', response.status, response.statusText);
+    return null;
+  }
+  
+  const data = await response.json();
+  console.log('Wikimedia response:', data.query?.search?.length || 0, 'results found');
+  
+  if (data.query?.search && data.query.search.length > 0) {
+    // Filter for likely line art files
+    const lineArtFiles = data.query.search.filter((file: any) => {
+      const title = file.title.toLowerCase();
+      return title.includes('.svg') || title.includes('line') || 
+             title.includes('drawing') || title.includes('illustration') ||
+             title.includes('outline');
+    });
+    
+    if (lineArtFiles.length > 0) {
+      const selectedFile = lineArtFiles[0];
+      const filename = selectedFile.title.replace('File:', '');
+      const imageUrl = `https://commons.wikimedia.org/wiki/Special:FilePath/${encodeURIComponent(filename)}?width=800`;
+      console.log('Selected Wikimedia line art:', imageUrl);
+      return imageUrl;
+    }
+  }
+  
+  return null;
+}
+
+async function generateSimpleSVGColoringPage(prompt: string): Promise<string | null> {
+  // Generate a simple SVG coloring page based on the prompt
+  try {
+    // Create basic shapes based on common coloring page themes
+    let svgContent = '';
+    const width = 800;
+    const height = 600;
+    
+    // Define some simple shapes based on the prompt
+    const promptLower = prompt.toLowerCase();
+    
+    if (promptLower.includes('flower') || promptLower.includes('garden')) {
+      svgContent = `
+        <circle cx="400" cy="300" r="80" fill="none" stroke="black" stroke-width="3"/>
+        <circle cx="400" cy="300" r="30" fill="none" stroke="black" stroke-width="2"/>
+        <ellipse cx="350" cy="250" rx="25" ry="40" fill="none" stroke="black" stroke-width="2"/>
+        <ellipse cx="450" cy="250" rx="25" ry="40" fill="none" stroke="black" stroke-width="2"/>
+        <ellipse cx="350" cy="350" rx="25" ry="40" fill="none" stroke="black" stroke-width="2"/>
+        <ellipse cx="450" cy="350" rx="25" ry="40" fill="none" stroke="black" stroke-width="2"/>
+        <ellipse cx="320" cy="300" rx="40" ry="25" fill="none" stroke="black" stroke-width="2"/>
+        <ellipse cx="480" cy="300" rx="40" ry="25" fill="none" stroke="black" stroke-width="2"/>
+        <line x1="400" y1="380" x2="400" y2="500" stroke="black" stroke-width="3"/>
+        <ellipse cx="380" cy="450" rx="20" ry="8" fill="none" stroke="black" stroke-width="2"/>
+        <ellipse cx="420" cy="470" rx="20" ry="8" fill="none" stroke="black" stroke-width="2"/>
+      `;
+    } else if (promptLower.includes('cat') || promptLower.includes('animal')) {
+      svgContent = `
+        <ellipse cx="400" cy="350" rx="100" ry="80" fill="none" stroke="black" stroke-width="3"/>
+        <circle cx="400" cy="250" r="60" fill="none" stroke="black" stroke-width="3"/>
+        <polygon points="350,220 370,180 390,220" fill="none" stroke="black" stroke-width="2"/>
+        <polygon points="410,220 430,180 450,220" fill="none" stroke="black" stroke-width="2"/>
+        <circle cx="380" cy="240" r="8" fill="black"/>
+        <circle cx="420" cy="240" r="8" fill="black"/>
+        <ellipse cx="400" cy="260" rx="15" ry="10" fill="none" stroke="black" stroke-width="2"/>
+        <path d="M 400 270 Q 390 280 380 275" fill="none" stroke="black" stroke-width="2"/>
+        <path d="M 400 270 Q 410 280 420 275" fill="none" stroke="black" stroke-width="2"/>
+        <line x1="340" y1="260" x2="280" y2="250" stroke="black" stroke-width="2"/>
+        <line x1="340" y1="270" x2="280" y2="270" stroke="black" stroke-width="2"/>
+        <line x1="460" y1="260" x2="520" y2="250" stroke="black" stroke-width="2"/>
+        <line x1="460" y1="270" x2="520" y2="270" stroke="black" stroke-width="2"/>
+      `;
+    } else if (promptLower.includes('tree') || promptLower.includes('nature')) {
+      svgContent = `
+        <ellipse cx="400" cy="200" rx="120" ry="100" fill="none" stroke="black" stroke-width="3"/>
+        <rect x="380" y="300" width="40" height="150" fill="none" stroke="black" stroke-width="3"/>
+        <ellipse cx="350" cy="180" rx="60" ry="50" fill="none" stroke="black" stroke-width="2"/>
+        <ellipse cx="450" cy="180" rx="60" ry="50" fill="none" stroke="black" stroke-width="2"/>
+        <ellipse cx="400" cy="130" rx="50" ry="40" fill="none" stroke="black" stroke-width="2"/>
+        <path d="M 350 350 Q 330 340 320 360" fill="none" stroke="black" stroke-width="2"/>
+        <path d="M 450 350 Q 470 340 480 360" fill="none" stroke="black" stroke-width="2"/>
+        <circle cx="300" cy="500" r="20" fill="none" stroke="black" stroke-width="2"/>
+        <circle cx="500" cy="480" r="25" fill="none" stroke="black" stroke-width="2"/>
+      `;
+    } else {
+      // Generic simple shapes for any other prompt
+      svgContent = `
+        <circle cx="400" cy="300" r="100" fill="none" stroke="black" stroke-width="3"/>
+        <rect x="300" y="200" width="200" height="200" fill="none" stroke="black" stroke-width="3"/>
+        <polygon points="400,150 350,250 450,250" fill="none" stroke="black" stroke-width="3"/>
+        <ellipse cx="400" cy="450" rx="80" ry="40" fill="none" stroke="black" stroke-width="2"/>
+      `;
+    }
+    
+    const svg = `<?xml version="1.0" encoding="UTF-8"?>
+    <svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
+      <rect width="100%" height="100%" fill="white"/>
+      ${svgContent}
+      <text x="400" y="550" text-anchor="middle" font-family="Arial, sans-serif" font-size="20" fill="black">Color Me: ${prompt}</text>
+    </svg>`;
+    
+    // Convert SVG to data URL
+    const svgDataUrl = `data:image/svg+xml;base64,${Buffer.from(svg).toString('base64')}`;
+    console.log('Generated simple SVG coloring page');
+    return svgDataUrl;
+    
+  } catch (error) {
+    console.error('SVG generation error:', error);
+    return null;
+  }
 }
