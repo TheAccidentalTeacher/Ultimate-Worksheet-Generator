@@ -26,11 +26,19 @@ export async function POST(req: NextRequest) {
       try {
         console.log('Enhancing prompt with GPT-4 for coloring page generation...');
         enhancedPrompt = await generateColoringPagePrompt(prompt, subject, grade, worksheetType);
-        console.log('Enhanced prompt:', enhancedPrompt.substring(0, 200) + '...');
+        console.log('=== ENHANCED PROMPT ===');
+        console.log(enhancedPrompt);
+        console.log('=== END ENHANCED PROMPT ===');
       } catch (error) {
-        console.error('Prompt enhancement failed, using original:', error);
-        enhancedPrompt = prompt;
+        console.error('Prompt enhancement failed, using fallback:', error);
+        // Create a strong fallback prompt
+        enhancedPrompt = `BLACK AND WHITE COLORING PAGE ONLY: ${prompt}. STRICT REQUIREMENTS: Pure black ink lines on white background, NO color, NO shading, NO gradients, NO gray, thick bold outlines only, simple line art for children to color, high contrast black and white, vector-style illustration, coloring book page.`;
+        console.log('Using fallback enhanced prompt:', enhancedPrompt);
       }
+    } else {
+      // If no OpenAI key, use manual enhancement
+      enhancedPrompt = `BLACK AND WHITE COLORING PAGE ONLY: ${prompt}. STRICT REQUIREMENTS: Pure black ink lines on white background, NO color, NO shading, NO gradients, NO gray, thick bold outlines only, simple line art for children to color, high contrast black and white, vector-style illustration, coloring book page.`;
+      console.log('No GPT-4 available, using manual enhancement:', enhancedPrompt);
     }
 
     // If DALL-E is specifically requested, try it first
@@ -415,6 +423,7 @@ async function generateStableDiffusionColoringPage(prompt: string): Promise<stri
   try {
     console.log('Generating Stable Diffusion coloring page for prompt:', prompt);
     
+    // Use a very specific model and approach for line art
     const response = await fetch('https://api.replicate.com/v1/predictions', {
       method: 'POST',
       headers: {
@@ -422,15 +431,18 @@ async function generateStableDiffusionColoringPage(prompt: string): Promise<stri
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        version: 'ac732df83cea7fff18b8472768c88ad041fa750ff7682a21affe81863cbe77e4', // Stable Diffusion XL
+        // Try a model specifically trained on line art
+        version: 'stability-ai/sdxl:39ed52f2a78e934b3ba6e2a89f5b1c712de7dfea535525255b1aa35c5565e08b',
         input: {
-          prompt: prompt,
-          negative_prompt: 'color, colored, shading, shadows, gradients, complex details, photorealistic, blurry, low quality, gray tones, textures, realistic, photograph, painted, filled areas, detailed shading, watercolor, pencil sketching, thin lines, fine details, small elements, cluttered, busy background, text, words, signatures',
-          width: 1152, // Larger for better print quality
-          height: 1152, // Square format works well for worksheets
-          num_inference_steps: 30, // More steps for better quality
-          guidance_scale: 15, // Higher guidance for better adherence to prompt
-          scheduler: 'DPMSolverMultistep'
+          prompt: `line art coloring book style: ${prompt}, black ink outline drawing, thick lines, white background, no color, no shading, simple line drawing, children's coloring book illustration`,
+          negative_prompt: 'color, colored, painting, shading, shadows, gradients, complex details, photorealistic, photo, realistic, blurry, low quality, gray tones, textures, filled areas, detailed shading, watercolor, pencil sketching, thin lines, fine details, small elements, cluttered, busy background, text, words, signatures, 3d render',
+          width: 1024,
+          height: 1024,
+          num_inference_steps: 40,
+          guidance_scale: 20, // Very high guidance to force line art style
+          scheduler: 'K_EULER_ANCESTRAL',
+          refine: 'expert_ensemble_refiner',
+          high_noise_frac: 0.8
         }
       })
     });
@@ -444,17 +456,15 @@ async function generateStableDiffusionColoringPage(prompt: string): Promise<stri
     const prediction = await response.json();
     console.log('Stable Diffusion prediction created:', prediction.id);
 
-    // Poll for completion (with timeout)
+    // Poll for completion
     let attempts = 0;
-    const maxAttempts = 30; // 30 seconds max
+    const maxAttempts = 50; // Longer timeout for high quality
     
     while (prediction.status !== 'succeeded' && prediction.status !== 'failed' && attempts < maxAttempts) {
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1 second
+      await new Promise(resolve => setTimeout(resolve, 1000));
       
       const statusResponse = await fetch(`https://api.replicate.com/v1/predictions/${prediction.id}`, {
-        headers: {
-          'Authorization': `Token ${REPLICATE_API_TOKEN}`,
-        }
+        headers: { 'Authorization': `Token ${REPLICATE_API_TOKEN}` }
       });
       
       if (statusResponse.ok) {
