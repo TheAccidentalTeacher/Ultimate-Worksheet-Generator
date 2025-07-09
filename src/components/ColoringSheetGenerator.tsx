@@ -95,22 +95,24 @@ export default function ColoringSheetGenerator({ theme, ageGroup, faithLevel }: 
           // Always prefer DALL-E for coloring books to get actual line art
           imageUrl = await generateColoringImage(prompt, true, theme, ageGroup, 'coloring page');
         } catch (err: any) {
-          console.log('[COLORING] Image generation failed, trying fallback:', err.message);
+          console.log('[COLORING] Image generation failed:', err.message);
           // Continue without failing the whole process
         }
+        
+        // Don't fallback to Unsplash photos - our SVG generation should always work
         if (!imageUrl) {
-          // Fallback: use a placeholder or skip image generation
-          try {
-            const res = await fetch(`/api/unsplash?query=${encodeURIComponent(prompt)}`);
-            if (res.ok) {
-              const data = await res.json();
-              imageUrl = data.results?.[0]?.urls?.regular || '';
-            }
-          } catch (fallbackErr) {
-            console.log('[COLORING] Unsplash fallback also failed, using placeholder');
-            // Use a placeholder image or empty string
-            imageUrl = '';
-          }
+          console.log('[COLORING] No image generated, using placeholder');
+          // Generate a simple placeholder SVG instead of using photos
+          const placeholderSVG = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(`
+            <svg width="400" height="300" xmlns="http://www.w3.org/2000/svg">
+              <rect width="100%" height="100%" fill="white"/>
+              <rect x="50" y="50" width="300" height="200" fill="none" stroke="black" stroke-width="3"/>
+              <text x="200" y="160" text-anchor="middle" font-family="Arial" font-size="18" fill="black">
+                Coloring Page: ${prompt.slice(0, 20)}
+              </text>
+            </svg>
+          `)}`;
+          imageUrl = placeholderSVG;
         }
         imageUrls.push(imageUrl || '');
         setProgress(p => Math.min(95, p + 5));

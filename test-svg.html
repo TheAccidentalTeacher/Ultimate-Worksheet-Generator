@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>SVG Test</title>
+</head>
+<body>
+    <h1>Testing SVG Generation</h1>
+    <script>
+        async function testSVG() {
+            try {
+                const response = await fetch('/api/generate-coloring-image', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        prompt: 'lion standing proudly in the savanna',
+                        preferDalle: false,
+                        subject: 'animals',
+                        grade: 'elementary',
+                        worksheetType: 'coloring page'
+                    })
+                });
+                
+                const result = await response.json();
+                console.log('API Response:', result);
+                
+                if (result.imageUrl) {
+                    const img = document.createElement('img');
+                    img.src = result.imageUrl;
+                    img.style.maxWidth = '500px';
+                    img.style.border = '2px solid black';
+                    document.body.appendChild(img);
+                    
+                    const info = document.createElement('p');
+                    info.textContent = `Source: ${result.source || 'unknown'}`;
+                    document.body.appendChild(info);
+                } else {
+                    const error = document.createElement('p');
+                    error.textContent = 'Error: ' + (result.error || 'No image generated');
+                    error.style.color = 'red';
+                    document.body.appendChild(error);
+                }
+            } catch (error) {
+                console.error('Test failed:', error);
+                const errorDiv = document.createElement('div');
+                errorDiv.textContent = 'Test failed: ' + error.message;
+                errorDiv.style.color = 'red';
+                document.body.appendChild(errorDiv);
+            }
+        }
+        
+        // Run test on page load
+        testSVG();
+    </script>
+</body>
+</html>
