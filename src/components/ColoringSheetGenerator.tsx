@@ -93,7 +93,7 @@ export default function ColoringSheetGenerator({ theme, ageGroup, faithLevel }: 
         let imageUrl = null;
         try {
           // Always prefer DALL-E for coloring books to get actual line art
-          imageUrl = await generateColoringImage(prompt, true);
+          imageUrl = await generateColoringImage(prompt, true, theme, ageGroup, 'coloring page');
         } catch (err: any) {
           console.log('[COLORING] Image generation failed, trying fallback:', err.message);
           // Continue without failing the whole process
@@ -163,7 +163,7 @@ export default function ColoringSheetGenerator({ theme, ageGroup, faithLevel }: 
       },
     ]);
     // Regenerate image for this page
-    const imageUrl = await generateColoringImage(newPrompt, true);
+    const imageUrl = await generateColoringImage(newPrompt, true, theme, ageGroup, 'coloring page');
     setImages(imgs => imgs.map((old, i) => (i === idx ? (imageUrl || '') : old)));
   };
 
