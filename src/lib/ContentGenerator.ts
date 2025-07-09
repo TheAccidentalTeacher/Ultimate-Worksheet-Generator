@@ -72,24 +72,15 @@ export class ContentGenerator {
       throw new Error('Invalid JSON from LLM');
     }
     this.progressCallback(50, 'Planning visual assets...');
-    // Step 4: Visual asset selection (simplified to avoid photo APIs)
+    // Step 4: Skip visual asset selection for now to avoid API conflicts
+    // Worksheets will work without images, and we can add image support later if needed
     if (worksheet && worksheet.visualAssets && Array.isArray(worksheet.visualAssets)) {
-      const { generateAiImage } = await import('./api-services/imageGenerationService');
+      console.log('[GENERATOR] Skipping visual asset generation to avoid API conflicts');
+      // Just mark assets as placeholders
       for (let i = 0; i < worksheet.visualAssets.length; i++) {
         const asset = worksheet.visualAssets[i];
-        this.progressCallback(55 + Math.floor((i * 30) / worksheet.visualAssets.length), `Preparing visual asset ${i + 1} of ${worksheet.visualAssets.length}...`);
-        
-        // Simplified: Use AI generation only for worksheet images
-        let imageResult;
-        try {
-          imageResult = await generateAiImage(asset.description || asset.query);
-          asset.imageUrl = imageResult.url;
-          asset.source = 'AI Generated';
-        } catch (error) {
-          console.warn(`[GENERATOR] Failed to generate image for ${asset.description}:`, error);
-          asset.imageUrl = '';
-          asset.source = 'Placeholder';
-        }
+        asset.imageUrl = '';
+        asset.source = 'Placeholder';
       }
     }
     this.progressCallback(90, 'Formatting final worksheet...');
@@ -158,34 +149,6 @@ Create exactly ${userSelections.numProblems || 5} ${userSelections.numProblems =
     console.log('[PROMPT] Generated prompt length:', prompt.length);
     return prompt;
   }
-
-  async determineOptimalImageSource(asset: import('./types').WorksheetVisualAsset, userSelections: import('./types').UserSelections) {
-    const { openai } = await import('./api-services/openaiService');
-    const prompt = `As an expert educational content curator, analyze this visual asset request and determine the optimal source.\n\n## VISUAL ASSET DETAILS\nDescription: ${asset.description}\nPurpose: ${asset.purpose}\nEducational Context: ${userSelections.grade} grade ${userSelections.subject} about ${userSelections.topic}\n\n## AVAILABLE IMAGE SOURCES\n1. Wikimedia Commons - Best for: historical images, scientific diagrams, maps, public domain educational content\n2. Unsplash - Best for: high-quality photographs, modern settings, nature, general concepts\n3. Pixabay - Best for: illustrations, clipart, simple diagrams\n4. AI Image Generation - Best for: custom educational illustrations, coloring pages, conceptual diagrams not readily available in stock photos\n\n## SPECIAL CONSIDERATIONS\n- For K-6 grade coloring pages, AI generation is typically best\n- For historical figures/events, Wikimedia Commons usually has authentic images\n- For abstract concepts, AI generation may create the most relevant educational illustration\n- For general photographs of nature, places, or common objects, stock photos are often best\n\n## REQUIRED OUTPUT\nProvide your analysis as a JSON object with the following structure:\n{\n  "recommendedSource": "wikimedia|unsplash|pixabay|ai-generation",\n  "rationale": "Brief explanation of why this source is best",\n  "enhancedQuery": "Optimized search query for stock photo APIs",\n  "enhancedPrompt": "Optimized prompt for AI image generation",\n  "imageType": "photo|illustration|vector|all"\n}`;
-    const completion = await openai.chat.completions.create({
-      model: 'gpt-4o',
-      messages: [
-        { role: 'system', content: prompt }
-      ],
-      response_format: { type: 'json_object' },
-      max_tokens: 500,
-      temperature: 0.3
-    });
-    try {
-      return JSON.parse(completion.choices[0]?.message?.content || '{}');
-    } catch (error) {
-      // Fallback to AI generation if parsing fails
-      return {
-        recommendedSource: 'ai-generation',
-        rationale: 'Fallback due to decision processing error',
-        enhancedQuery: asset.description,
-        enhancedPrompt: `Educational illustration for ${userSelections.grade} grade ${userSelections.subject} about ${asset.description}. ${asset.purpose}`,
-        imageType: 'all'
-      };
-    }
-  }
-
-
 
   sleep(ms: number) {
     return new Promise(resolve => setTimeout(resolve, ms));
