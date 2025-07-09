@@ -41,8 +41,8 @@ export async function POST(req: NextRequest) {
       console.log('No GPT-4 available, using manual enhancement:', enhancedPrompt);
     }
 
-    // If DALL-E is specifically requested, try it first
-    if (preferDalle && OPENAI_API_KEY && OPENAI_API_KEY !== 'your-openai-api-key-here' && OPENAI_API_KEY.length > 10) {
+    // TEMPORARILY DISABLE DALL-E to force Stable Diffusion testing
+    if (false) {
       console.log('Attempting DALL-E 3 image generation (preferred)...');
       try {
         // Reduced timeout for serverless environment (Netlify Functions have 10s limit on hobby plan)
@@ -57,7 +57,7 @@ export async function POST(req: NextRequest) {
           console.log('DALL-E 3 success:', imageUrl);
           return NextResponse.json({ imageUrl, source: 'dall-e-3' });
         }
-      } catch (error) {
+      } catch (error: any) {
         const errorMessage = error instanceof Error ? error.message : 'Unknown DALL-E error';
         console.error('DALL-E 3 failed:', errorMessage);
         // Continue to fallback with logged error details
