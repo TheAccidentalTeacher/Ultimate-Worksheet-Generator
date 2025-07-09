@@ -98,9 +98,8 @@ export class ContentGenerator {
   }
 
   buildPrompt(userSelections: any) {
-    // TODO: Use your prompt-kitchen-template.md for full prompt logic
-    // This is a minimal version for now
-    return `You are an expert homeschool educator who creates engaging, age-appropriate worksheets.\n\nGrade Level: ${userSelections.grade}\nSubject: ${userSelections.subject}\nTopic: ${userSelections.topic}\nStyle: ${userSelections.worksheetStyle}\nChristian Content: ${userSelections.christianContent}\nScaffolding: ${userSelections.scaffolding}\nDifficulty: ${userSelections.differentiation}\nDuration: ${userSelections.timeEstimate}\n\nIMPORTANT SUBJECT-SPECIFIC GUIDELINES: ${userSelections.subjectInfo?.specialInstructions || ''}\n\nReturn a JSON object with this exact structure: { ... }`;
+    // Full prompt logic from prompt-kitchen-template.md
+    return `SYSTEM PROMPT (for LLM, e.g., GPT-4)\n-------------------------------------\nYou are an expert homeschool educator who creates engaging, age-appropriate worksheets.\n\nGrade Level: ${userSelections.grade}\nSubject: ${userSelections.subject}\nTopic: ${userSelections.topic}\nStyle: ${userSelections.worksheetStyle}\nChristian Content: ${userSelections.christianContent}\nScaffolding: ${userSelections.scaffolding}\nDifficulty: ${userSelections.differentiation}\nDuration: ${userSelections.timeEstimate}\n\nIMPORTANT SUBJECT-SPECIFIC GUIDELINES:\n${userSelections.subjectInfo?.specialInstructions || ''}\n\nRecommended activity types for ${userSelections.subject}: ${userSelections.subjectInfo?.activityTypes?.join(', ') || ''}\n\nFor Christian content levels:\n- Secular: No religious content\n- Gently Christian: Occasional positive biblical worldview, wholesome values\n- Moderately Christian: Regular scripture references, biblical principles woven in naturally\n- Richly Biblical: Heavy scripture integration, explicit faith connections, biblical applications\n\nReturn a JSON object with this exact structure:\n{ ... }`;
   }
 
   async determineOptimalImageSource(asset: any, userSelections: any) {
