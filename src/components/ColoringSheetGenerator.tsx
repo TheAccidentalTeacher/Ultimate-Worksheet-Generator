@@ -250,7 +250,7 @@ export default function ColoringSheetGenerator({ theme, ageGroup, faithLevel }: 
             <div className="bg-gradient-to-br from-pink-50 via-purple-50 to-blue-50 rounded-2xl p-6 mb-6 min-w-0 max-w-full">
               <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
                 <span className="text-2xl mr-2">🎨</span>
-                What's Inside Your Coloring Book
+                What&apos;s Inside Your Coloring Book
               </h3>
               
                 <div className="grid md:grid-cols-2 gap-4 mb-6 min-w-0 max-w-full">
@@ -262,7 +262,7 @@ export default function ColoringSheetGenerator({ theme, ageGroup, faithLevel }: 
                 </div>
                 
                 <div className="bg-white/80 rounded-xl p-4 border border-purple-200">
-                  <h4 className="font-semibold text-purple-800 mb-2">🎯 What You'll Get</h4>
+                  <h4 className="font-semibold text-purple-800 mb-2">🎯 What You&apos;ll Get</h4>
                   <p className="text-sm text-gray-700 mb-1">• {result.coloringPages.length} beautiful coloring pages</p>
                   <p className="text-sm text-gray-700 mb-1">• Detailed coloring instructions</p>
                   <p className="text-sm text-gray-700">• Fun activities and tips</p>

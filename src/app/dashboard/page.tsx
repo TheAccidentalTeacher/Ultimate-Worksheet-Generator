@@ -161,7 +161,7 @@ export default function DashboardPage() {
             </div>
           </div>
           <h2 className="text-4xl font-bold text-gray-900 mb-2">Your Magical Worksheet Creator</h2>
-          <p className="text-lg text-gray-600">Let's craft the perfect learning adventure for your precious ones! ✨</p>
+          <p className="text-lg text-gray-600">Let&apos;s craft the perfect learning adventure for your precious ones! ✨</p>
         </div>
 
         {/* Tab Navigation */}
@@ -421,7 +421,7 @@ export default function DashboardPage() {
                 </li>
                 <li className="flex items-start">
                   <span className="text-amber-600 mr-2">✨</span>
-                  Consider your child's attention span when selecting problems
+                  Consider your child&apos;s attention span when selecting problems
                 </li>
                 <li className="flex items-start">
                   <span className="text-amber-600 mr-2">✨</span>
@@ -513,7 +513,7 @@ export default function DashboardPage() {
                     
                     <p className="text-xl text-gray-700 mb-8 max-w-3xl mx-auto leading-relaxed">
                       Design beautiful, whimsical coloring pages that spark creativity and joy! 
-                      Every page is crafted with love to bring out your child's artistic spirit. ✨
+                      Every page is crafted with love to bring out your child&apos;s artistic spirit. ✨
                     </p>
                     
                     <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 border border-pink-200 shadow-lg">

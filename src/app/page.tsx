@@ -85,7 +85,7 @@ export default function HomePage() {
 
             <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto leading-relaxed">
               Your creative workspace for crafting whimsical coloring pages and personalized worksheets. 
-              Every creation is designed with love, joy, and your child's unique spark in mind. ✨
+              Every creation is designed with love, joy, and your child&apos;s unique spark in mind. ✨
             </p>
 
             {/* CTA Buttons */}
@@ -94,7 +94,7 @@ export default function HomePage() {
                 onClick={() => setShowOnboarding(true)}
                 className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white px-8 py-4 rounded-full text-lg font-semibold shadow-xl transform hover:scale-105 transition-all flex items-center justify-center space-x-2"
               >
-                <span>Let's Create Together</span>
+                <span>Let&apos;s Create Together</span>
                 <ArrowRight className="h-5 w-5" />
               </button>
               <button 
@@ -111,10 +111,10 @@ export default function HomePage() {
                 <div className="bg-white rounded-2xl p-8 max-w-md shadow-2xl transform animate-fade-in">
                   <div className="text-center">
                     <div className="text-4xl mb-4">🎨</div>
-                    <h3 className="text-2xl font-bold text-gray-800 mb-4">Let's Get Started!</h3>
+                    <h3 className="text-2xl font-bold text-gray-800 mb-4">Let&apos;s Get Started!</h3>
                     <p className="text-gray-600 mb-6">
-                      I'll guide you through creating the perfect worksheet for your little learner. 
-                      It's going to be fun and so easy!
+                      I&apos;ll guide you through creating the perfect worksheet for your little learner. 
+                      It&apos;s going to be fun and so easy!
                     </p>
                     <div className="flex gap-3">
                       <button 
