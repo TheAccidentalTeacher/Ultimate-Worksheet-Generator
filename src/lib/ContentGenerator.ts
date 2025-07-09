@@ -7,14 +7,18 @@ export class ContentGenerator {
   }
 
   async generateWorksheet(userSelections: import('./types').UserSelections) {
+    console.log('[GENERATOR] Starting worksheet generation with:', userSelections);
     this.progressCallback(10, 'Analyzing educational requirements...');
+    
     // Step 1: Assemble prompt
     const prompt = this.buildPrompt(userSelections);
     this.progressCallback(20, 'Generating educational content...');
+    
     // Step 2: Call GPT API
     const { openai } = await import('./api-services/openaiService');
     let worksheetContent;
     try {
+      console.log('[GENERATOR] Calling OpenAI with prompt length:', prompt.length);
       const completion = await openai.chat.completions.create({
         model: 'gpt-4o',
         messages: [
@@ -24,16 +28,28 @@ export class ContentGenerator {
         max_tokens: 2048
       });
       worksheetContent = completion.choices[0]?.message?.content;
+      console.log('[GENERATOR] OpenAI response received, length:', worksheetContent?.length || 0);
+      console.log('[GENERATOR] OpenAI response preview:', worksheetContent?.substring(0, 200) + '...');
       this.progressCallback(40, 'Processing worksheet structure...');
     } catch (err: any) {
+      console.error('[GENERATOR] OpenAI API error:', err);
       this.progressCallback(100, 'Error: ' + (err.message || 'Failed to generate worksheet'));
       throw err;
     }
+    
     // Step 3: Parse and validate
     let worksheet;
     try {
       worksheet = JSON.parse(worksheetContent || '{}');
+      console.log('[GENERATOR] Parsed worksheet:', {
+        title: worksheet.title,
+        problemsCount: worksheet.problems?.length || 0,
+        hasDescription: !!worksheet.description,
+        hasInstructions: !!worksheet.instructions
+      });
     } catch (e) {
+      console.error('[GENERATOR] JSON parsing error:', e);
+      console.error('[GENERATOR] Raw content that failed to parse:', worksheetContent);
       this.progressCallback(100, 'Error: Invalid JSON from LLM');
       throw new Error('Invalid JSON from LLM');
     }
@@ -98,8 +114,63 @@ export class ContentGenerator {
   }
 
   buildPrompt(userSelections: import('./types').UserSelections) {
+    console.log('[PROMPT] Building prompt with user selections:', userSelections);
+    
     // Full prompt logic from prompt-kitchen-template.md
-    return `SYSTEM PROMPT (for LLM, e.g., GPT-4)\n-------------------------------------\nYou are an expert homeschool educator who creates engaging, age-appropriate worksheets.\n\nGrade Level: ${userSelections.grade}\nSubject: ${userSelections.subject}\nTopic: ${userSelections.topic}\nStyle: ${userSelections.worksheetStyle}\nChristian Content: ${userSelections.christianContent}\nScaffolding: ${userSelections.scaffolding}\nDifficulty: ${userSelections.differentiation}\nDuration: ${userSelections.timeEstimate}\n\nIMPORTANT SUBJECT-SPECIFIC GUIDELINES:\n${userSelections.subjectInfo?.specialInstructions || ''}\n\nRecommended activity types for ${userSelections.subject}: ${userSelections.subjectInfo?.activityTypes?.join(', ') || ''}\n\nFor Christian content levels:\n- Secular: No religious content\n- Gently Christian: Occasional positive biblical worldview, wholesome values\n- Moderately Christian: Regular scripture references, biblical principles woven in naturally\n- Richly Biblical: Heavy scripture integration, explicit faith connections, biblical applications\n\nReturn a JSON object with this exact structure:\n{ ... }`;
+    const prompt = `SYSTEM PROMPT (for LLM, e.g., GPT-4)
+-------------------------------------
+You are an expert homeschool educator who creates engaging, age-appropriate worksheets.
+
+Grade Level: ${userSelections.grade}
+Subject: ${userSelections.subject}
+Topic: ${userSelections.topic}
+Style: ${userSelections.worksheetStyle || 'engaging'}
+Christian Content: ${userSelections.christianContent || 'Moderately Christian'}
+Scaffolding: ${userSelections.scaffolding || 'standard'}
+Difficulty: ${userSelections.differentiation || 'grade-appropriate'}
+Duration: ${userSelections.timeEstimate || '30 minutes'}
+
+IMPORTANT SUBJECT-SPECIFIC GUIDELINES:
+${userSelections.subjectInfo?.specialInstructions || 'Create age-appropriate activities that engage students and reinforce learning objectives.'}
+
+Recommended activity types for ${userSelections.subject}: ${userSelections.subjectInfo?.activityTypes?.join(', ') || 'multiple-choice, short-answer, creative-thinking'}
+
+For Christian content levels:
+- Secular: No religious content
+- Gently Christian: Occasional positive biblical worldview, wholesome values
+- Moderately Christian: Regular scripture references, biblical principles woven in naturally
+- Richly Biblical: Heavy scripture integration, explicit faith connections, biblical applications
+
+Return a JSON object with this exact structure:
+{
+  "title": "Engaging worksheet title",
+  "grade": "${userSelections.grade}",
+  "subject": "${userSelections.subject}",
+  "topic": "${userSelections.topic}",
+  "description": "Brief description of what students will learn",
+  "instructions": "Clear, student-friendly instructions",
+  "estimatedTime": "X minutes",
+  "problems": [
+    {
+      "id": 1,
+      "type": "multiple-choice|short-answer|fill-in-blank|true-false|creative-writing|word-problem|diagram-labeling",
+      "question": "The question or activity prompt",
+      "options": ["Option A", "Option B", "Option C", "Option D"],
+      "answer": "Expected answer or completion criteria",
+      "explanation": "Why this activity helps learning",
+      "christianConnection": "Optional faith connection (if applicable)",
+      "materials": "Any specific materials needed"
+    }
+  ],
+  "answerKey": "Brief teacher notes and tips",
+  "extensions": ["Optional extension activities"],
+  "materials": ["Materials needed for the entire worksheet"]
+}
+
+Create exactly ${userSelections.numProblems || 5} problems/activities. Make sure each problem is educational, age-appropriate, and engaging.`;
+
+    console.log('[PROMPT] Generated prompt length:', prompt.length);
+    return prompt;
   }
 
   async determineOptimalImageSource(asset: import('./types').WorksheetVisualAsset, userSelections: import('./types').UserSelections) {

@@ -46,6 +46,7 @@ export interface UserSelections {
   scaffolding: string;
   differentiation: string;
   timeEstimate: string;
+  numProblems?: number;
   subjectInfo?: {
     specialInstructions?: string;
     activityTypes?: string[];
