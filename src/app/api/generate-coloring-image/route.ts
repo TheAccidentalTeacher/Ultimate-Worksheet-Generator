@@ -7,17 +7,31 @@ const REPLICATE_API_TOKEN = process.env.REPLICATE_API_TOKEN;
 
 export async function POST(req: NextRequest) {
   try {
-    const { prompt, preferDalle = false } = await req.json();
+    const { prompt, preferDalle = false, subject, grade, worksheetType } = await req.json();
     if (!prompt) {
       return NextResponse.json({ error: 'No prompt provided' }, { status: 400 });
     }
 
     console.log('Image generation request for prompt:', prompt);
+    console.log('Subject:', subject, 'Grade:', grade, 'Type:', worksheetType);
     console.log('DALL-E preferred:', preferDalle);
     console.log('OPENAI_API_KEY available:', !!OPENAI_API_KEY);
     console.log('UNSPLASH_ACCESS_KEY available:', !!UNSPLASH_ACCESS_KEY);
     console.log('PIXABAY_API_KEY available:', !!PIXABAY_API_KEY);
     console.log('REPLICATE_API_TOKEN available:', !!REPLICATE_API_TOKEN);
+
+    // Generate enhanced coloring page prompt using GPT-4
+    let enhancedPrompt = prompt;
+    if (OPENAI_API_KEY && OPENAI_API_KEY !== 'your-openai-api-key-here' && OPENAI_API_KEY.length > 10) {
+      try {
+        console.log('Enhancing prompt with GPT-4 for coloring page generation...');
+        enhancedPrompt = await generateColoringPagePrompt(prompt, subject, grade, worksheetType);
+        console.log('Enhanced prompt:', enhancedPrompt.substring(0, 200) + '...');
+      } catch (error) {
+        console.error('Prompt enhancement failed, using original:', error);
+        enhancedPrompt = prompt;
+      }
+    }
 
     // If DALL-E is specifically requested, try it first
     if (preferDalle && OPENAI_API_KEY && OPENAI_API_KEY !== 'your-openai-api-key-here' && OPENAI_API_KEY.length > 10) {
@@ -28,7 +42,7 @@ export async function POST(req: NextRequest) {
           setTimeout(() => reject(new Error('DALL-E timeout after 8 seconds')), 8000)
         );
         
-        const dallePromise = generateDallE3Image(prompt);
+        const dallePromise = generateDallE3Image(enhancedPrompt);
         const imageUrl = await Promise.race([dallePromise, timeoutPromise]);
         
         if (imageUrl) {
@@ -46,7 +60,7 @@ export async function POST(req: NextRequest) {
     if (REPLICATE_API_TOKEN && REPLICATE_API_TOKEN !== 'your_replicate_api_token_here' && REPLICATE_API_TOKEN.length > 10) {
       console.log('Attempting Stable Diffusion via Replicate for coloring pages...');
       try {
-        const imageUrl = await generateStableDiffusionColoringPage(prompt);
+        const imageUrl = await generateStableDiffusionColoringPage(enhancedPrompt);
         if (imageUrl) {
           console.log('Stable Diffusion success:', imageUrl);
           return NextResponse.json({ imageUrl, source: 'stable-diffusion' });
@@ -62,7 +76,7 @@ export async function POST(req: NextRequest) {
     if (PIXABAY_API_KEY && PIXABAY_API_KEY !== 'your-pixabay-api-key-here' && PIXABAY_API_KEY.length > 10) {
       console.log('Attempting Pixabay for coloring page images...');
       try {
-        const imageUrl = await getPixabayColoringPage(prompt);
+        const imageUrl = await getPixabayColoringPage(enhancedPrompt);
         if (imageUrl) {
           console.log('Pixabay coloring page success:', imageUrl);
           return NextResponse.json({ imageUrl, source: 'pixabay-coloring' });
@@ -75,7 +89,7 @@ export async function POST(req: NextRequest) {
     // Try OpenClipart for line art
     console.log('Attempting OpenClipart for vector line art...');
     try {
-      const imageUrl = await getOpenClipartImage(prompt);
+      const imageUrl = await getOpenClipartImage(enhancedPrompt);
       if (imageUrl) {
         console.log('OpenClipart success:', imageUrl);
         return NextResponse.json({ imageUrl, source: 'openclipart' });
@@ -87,7 +101,7 @@ export async function POST(req: NextRequest) {
     // Try Wikimedia Commons for line art
     console.log('Attempting Wikimedia Commons for line drawings...');
     try {
-      const imageUrl = await getWikimediaLineArt(prompt);
+      const imageUrl = await getWikimediaLineArt(enhancedPrompt);
       if (imageUrl) {
         console.log('Wikimedia line art success:', imageUrl);
         return NextResponse.json({ imageUrl, source: 'wikimedia-lineart' });
@@ -104,7 +118,7 @@ export async function POST(req: NextRequest) {
           setTimeout(() => reject(new Error('DALL-E fallback timeout after 8 seconds')), 8000)
         );
         
-        const dallePromise = generateDallE3Image(prompt);
+        const dallePromise = generateDallE3Image(enhancedPrompt);
         const imageUrl = await Promise.race([dallePromise, timeoutPromise]);
         
         if (imageUrl) {
@@ -120,7 +134,7 @@ export async function POST(req: NextRequest) {
     // Generate a simple SVG coloring page as last resort
     console.log('Generating simple SVG coloring page as final fallback...');
     try {
-      const svgUrl = await generateSimpleSVGColoringPage(prompt);
+      const svgUrl = await generateSimpleSVGColoringPage(enhancedPrompt);
       if (svgUrl) {
         console.log('Simple SVG coloring page generated:', svgUrl);
         return NextResponse.json({ imageUrl: svgUrl, source: 'svg-generated' });
@@ -174,13 +188,9 @@ async function getUnsplashImage(prompt: string): Promise<string | null> {
 }
 
 async function generateDallE3Image(prompt: string): Promise<string | null> {
-  // Optimize the prompt for better line art results
-  const lineArtPrompt = `Black and white coloring page: ${prompt}. Simple line art with thick black outlines, no shading, no color, white background, suitable for coloring book.`;
-
   try {
-    console.log('Sending optimized DALL-E 3 request with prompt:', lineArtPrompt.substring(0, 100) + '...');
+    console.log('Sending DALL-E 3 request with enhanced prompt:', prompt.substring(0, 100) + '...');
     
-    // Remove the fetch timeout to let DALL-E take the time it needs
     const response = await fetch('https://api.openai.com/v1/images/generations', {
       method: 'POST',
       headers: {
@@ -189,9 +199,9 @@ async function generateDallE3Image(prompt: string): Promise<string | null> {
       },
       body: JSON.stringify({
         model: 'dall-e-3',
-        prompt: lineArtPrompt,
+        prompt: prompt,
         size: '1024x1024',
-        quality: 'standard',
+        quality: 'hd', // Use HD quality for better line art
         n: 1,
       }),
     });
@@ -405,9 +415,6 @@ async function generateStableDiffusionColoringPage(prompt: string): Promise<stri
   try {
     console.log('Generating Stable Diffusion coloring page for prompt:', prompt);
     
-    // Optimized prompt for coloring book style images
-    const coloringPrompt = `coloring book page, ${prompt}, black and white line art, thick black outlines, no shading, no color, simple clean lines, white background, suitable for children to color, detailed but not cluttered, vector style illustration`;
-    
     const response = await fetch('https://api.replicate.com/v1/predictions', {
       method: 'POST',
       headers: {
@@ -417,13 +424,13 @@ async function generateStableDiffusionColoringPage(prompt: string): Promise<stri
       body: JSON.stringify({
         version: 'ac732df83cea7fff18b8472768c88ad041fa750ff7682a21affe81863cbe77e4', // Stable Diffusion XL
         input: {
-          prompt: coloringPrompt,
-          negative_prompt: 'color, colored, shading, shadows, gradients, complex details, photorealistic, blurry, low quality',
-          width: 1024,
-          height: 1024,
-          num_inference_steps: 20,
-          guidance_scale: 7.5,
-          scheduler: 'K_EULER'
+          prompt: prompt,
+          negative_prompt: 'color, colored, shading, shadows, gradients, complex details, photorealistic, blurry, low quality, gray tones, textures, realistic, photograph, painted, filled areas, detailed shading, watercolor, pencil sketching, thin lines, fine details, small elements, cluttered, busy background, text, words, signatures',
+          width: 1152, // Larger for better print quality
+          height: 1152, // Square format works well for worksheets
+          num_inference_steps: 30, // More steps for better quality
+          guidance_scale: 15, // Higher guidance for better adherence to prompt
+          scheduler: 'DPMSolverMultistep'
         }
       })
     });
@@ -471,5 +478,72 @@ async function generateStableDiffusionColoringPage(prompt: string): Promise<stri
   } catch (error) {
     console.error('Stable Diffusion generation error:', error instanceof Error ? error.message : error);
     return null;
+  }
+}
+
+async function generateColoringPagePrompt(originalPrompt: string, subject?: string, grade?: string, worksheetType?: string): Promise<string> {
+  try {
+    console.log('Enhancing prompt with GPT-4...');
+    
+    const systemPrompt = `You are an expert at creating detailed, specific prompts for AI image generation that produce perfect black and white coloring pages for children. Your task is to transform a simple prompt into a highly detailed, technical prompt that will generate clean line art suitable for coloring.
+
+CRITICAL REQUIREMENTS for coloring pages:
+- MUST be black ink outlines only on pure white background
+- NO color, NO shading, NO gradients, NO gray tones
+- Thick, bold black lines (3-5px width)
+- Simple, clear shapes appropriate for children to color
+- Age-appropriate content and complexity
+- Large, well-defined areas for coloring
+- No tiny details that are hard to color
+
+Context information:
+- Subject: ${subject || 'General'}
+- Grade Level: ${grade || 'Elementary'}
+- Worksheet Type: ${worksheetType || 'Coloring Page'}
+
+Transform the user's prompt into a detailed technical prompt that emphasizes these requirements.`;
+
+    const userMessage = `Original prompt: "${originalPrompt}"
+
+Please create a detailed, technical prompt for generating a perfect black and white coloring page. Include specific technical requirements about line weight, contrast, and style. Make sure the prompt is optimized for AI image generation tools like DALL-E and Stable Diffusion.
+
+Example format:
+"Black and white coloring page of [subject]. TECHNICAL REQUIREMENTS: Thick black ink outlines only, 4-5px line weight, pure white background (#FFFFFF), no shading, no color, no gradients, no gray tones, simple clean line art, bold contrasting lines, large coloring areas, child-friendly design, printable quality, high contrast black (#000000) on white, suitable for crayons and markers, [age-appropriate details for ${grade || 'elementary'} level]."`;
+
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${OPENAI_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'gpt-4o',
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userMessage }
+        ],
+        max_tokens: 300,
+        temperature: 0.3, // Lower temperature for more consistent, technical prompts
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`GPT-4 API error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    const enhancedPrompt = data.choices?.[0]?.message?.content?.trim();
+    
+    if (!enhancedPrompt) {
+      throw new Error('No enhanced prompt generated');
+    }
+    
+    console.log('GPT-4 enhanced prompt created successfully');
+    return enhancedPrompt;
+    
+  } catch (error) {
+    console.error('GPT-4 prompt enhancement failed:', error);
+    // Fallback to a manually enhanced prompt
+    return `Black and white coloring page of ${originalPrompt}. TECHNICAL REQUIREMENTS: Thick black ink outlines only, 4-5px line weight, pure white background (#FFFFFF), no shading, no color, no gradients, no gray tones, simple clean line art, bold contrasting lines, large coloring areas, child-friendly design, printable quality, high contrast black (#000000) on white, suitable for crayons and markers, ${grade || 'elementary'} grade appropriate.`;
   }
 }
