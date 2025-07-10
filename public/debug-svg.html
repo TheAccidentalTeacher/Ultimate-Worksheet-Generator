@@ -20,63 +20,126 @@
         async function testSVGGeneration() {
             const results = document.getElementById('results');
             
-            const tests = [
-                { prompt: 'lion standing proudly', label: 'Simple Lion' },
-                { prompt: 'enchanted garden', label: 'Enchanted Garden' },
-                { prompt: 'mighty oak tree', label: 'Mighty Oak Tree' }
-            ];
+            // First, test the API directly
+            const directTest = document.createElement('div');
+            directTest.className = 'test-result';
+            directTest.innerHTML = '<h3>🔍 Testing API Directly...</h3>';
+            results.appendChild(directTest);
             
-            for (const test of tests) {
-                const resultDiv = document.createElement('div');
-                resultDiv.className = 'test-result';
-                resultDiv.innerHTML = `<h3>Testing: ${test.label}</h3><p>Loading...</p>`;
-                results.appendChild(resultDiv);
+            try {
+                const response = await fetch('/api/generate-coloring-image', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        prompt: 'simple lion',
+                        preferDalle: false,
+                        subject: 'art',
+                        grade: 'elementary',
+                        worksheetType: 'coloring page'
+                    })
+                });
                 
+                const responseText = await response.text();
+                console.log('Raw API Response:', responseText);
+                
+                let result;
                 try {
-                    console.log(`Testing ${test.label} with prompt: ${test.prompt}`);
-                    
-                    const response = await fetch('/api/generate-coloring-image', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ 
-                            prompt: test.prompt,
-                            preferDalle: false,
-                            subject: 'art',
-                            grade: 'elementary',
-                            worksheetType: 'coloring page'
-                        })
-                    });
-                    
-                    const result = await response.json();
-                    console.log(`${test.label} result:`, result);
-                    
-                    if (result.imageUrl && result.imageUrl.startsWith('data:image/svg+xml')) {
-                        resultDiv.className = 'test-result success';
-                        resultDiv.innerHTML = `
-                            <h3>✅ ${test.label} - SUCCESS</h3>
+                    result = JSON.parse(responseText);
+                } catch (e) {
+                    throw new Error('API returned invalid JSON: ' + responseText);
+                }
+                
+                console.log('Parsed API Result:', result);
+                
+                if (result.imageUrl) {
+                    if (result.imageUrl.startsWith('data:image/svg+xml')) {
+                        directTest.className = 'test-result success';
+                        directTest.innerHTML = `
+                            <h3>✅ API WORKING - SVG Generated</h3>
                             <p><strong>Source:</strong> ${result.source}</p>
-                            <p><strong>SVG Data URL:</strong> ${result.imageUrl.substring(0, 100)}...</p>
-                            <img src="${result.imageUrl}" alt="${test.label}">
+                            <p><strong>SVG Length:</strong> ${result.imageUrl.length} chars</p>
+                            <img src="${result.imageUrl}" alt="Test SVG">
+                            <details>
+                                <summary>Raw SVG Data</summary>
+                                <pre>${result.imageUrl.substring(0, 500)}...</pre>
+                            </details>
                         `;
                     } else {
-                        resultDiv.className = 'test-result error';
-                        resultDiv.innerHTML = `
-                            <h3>❌ ${test.label} - NOT SVG</h3>
-                            <p><strong>Source:</strong> ${result.source || 'unknown'}</p>
-                            <p><strong>Image URL:</strong> ${result.imageUrl || 'none'}</p>
-                            <p><strong>Error:</strong> ${result.error || 'Got photo instead of SVG'}</p>
-                            ${result.imageUrl ? `<img src="${result.imageUrl}" alt="${test.label}">` : ''}
-                            <pre>${JSON.stringify(result, null, 2)}</pre>
+                        directTest.className = 'test-result error';
+                        directTest.innerHTML = `
+                            <h3>❌ API BROKEN - Not SVG</h3>
+                            <p><strong>Source:</strong> ${result.source}</p>
+                            <p><strong>URL Type:</strong> ${result.imageUrl.substring(0, 50)}...</p>
+                            <p><strong>This should NEVER happen!</strong></p>
+                            <img src="${result.imageUrl}" alt="Wrong type">
                         `;
                     }
-                } catch (error) {
-                    console.error(`${test.label} failed:`, error);
-                    resultDiv.className = 'test-result error';
-                    resultDiv.innerHTML = `
-                        <h3>❌ ${test.label} - ERROR</h3>
-                        <p><strong>Error:</strong> ${error.message}</p>
+                } else {
+                    directTest.className = 'test-result error';
+                    directTest.innerHTML = `
+                        <h3>❌ API FAILED - No Image</h3>
+                        <p><strong>Error:</strong> ${result.error || 'No error message'}</p>
+                        <pre>${JSON.stringify(result, null, 2)}</pre>
                     `;
                 }
+            } catch (error) {
+                console.error('Direct API test failed:', error);
+                directTest.className = 'test-result error';
+                directTest.innerHTML = `
+                    <h3>❌ API ERROR</h3>
+                    <p><strong>Error:</strong> ${error.message}</p>
+                `;
+            }
+            
+            // Now test via the coloringImageApi.ts wrapper
+            const wrapperTest = document.createElement('div');
+            wrapperTest.className = 'test-result';
+            wrapperTest.innerHTML = '<h3>🔍 Testing via coloringImageApi wrapper...</h3>';
+            results.appendChild(wrapperTest);
+            
+            try {
+                // Simulate importing and using the wrapper function
+                const response = await fetch('/api/generate-coloring-image', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        prompt: 'enchanted garden',
+                        preferDalle: true,  // Test with preferDalle true
+                        subject: 'nature',
+                        grade: 'elementary',
+                        worksheetType: 'coloring page'
+                    }),
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                const imageUrl = data.imageUrl || null;
+                
+                if (imageUrl && imageUrl.startsWith('data:image/svg+xml')) {
+                    wrapperTest.className = 'test-result success';
+                    wrapperTest.innerHTML = `
+                        <h3>✅ Wrapper Working</h3>
+                        <p><strong>Source:</strong> ${data.source}</p>
+                        <img src="${imageUrl}" alt="Wrapper test">
+                    `;
+                } else {
+                    wrapperTest.className = 'test-result error';
+                    wrapperTest.innerHTML = `
+                        <h3>❌ Wrapper Issue</h3>
+                        <p><strong>Returned:</strong> ${imageUrl ? imageUrl.substring(0, 100) : 'null'}</p>
+                        <p><strong>Source:</strong> ${data.source}</p>
+                        ${imageUrl ? `<img src="${imageUrl}" alt="Wrong result">` : ''}
+                    `;
+                }
+            } catch (error) {
+                wrapperTest.className = 'test-result error';
+                wrapperTest.innerHTML = `
+                    <h3>❌ Wrapper Error</h3>
+                    <p><strong>Error:</strong> ${error.message}</p>
+                `;
             }
         }
         
