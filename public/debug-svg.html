@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>SVG Test - Debug Coloring Generation</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .test-result { margin: 20px 0; padding: 15px; border: 2px solid #ccc; }
+        .success { border-color: green; background: #f0fff0; }
+        .error { border-color: red; background: #fff0f0; }
+        img { max-width: 400px; border: 2px solid black; }
+        pre { background: #f5f5f5; padding: 10px; overflow: auto; }
+    </style>
+</head>
+<body>
+    <h1>🔍 SVG Generation Debug Test</h1>
+    
+    <div id="results"></div>
+    
+    <script>
+        async function testSVGGeneration() {
+            const results = document.getElementById('results');
+            
+            const tests = [
+                { prompt: 'lion standing proudly', label: 'Simple Lion' },
+                { prompt: 'enchanted garden', label: 'Enchanted Garden' },
+                { prompt: 'mighty oak tree', label: 'Mighty Oak Tree' }
+            ];
+            
+            for (const test of tests) {
+                const resultDiv = document.createElement('div');
+                resultDiv.className = 'test-result';
+                resultDiv.innerHTML = `<h3>Testing: ${test.label}</h3><p>Loading...</p>`;
+                results.appendChild(resultDiv);
+                
+                try {
+                    console.log(`Testing ${test.label} with prompt: ${test.prompt}`);
+                    
+                    const response = await fetch('/api/generate-coloring-image', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ 
+                            prompt: test.prompt,
+                            preferDalle: false,
+                            subject: 'art',
+                            grade: 'elementary',
+                            worksheetType: 'coloring page'
+                        })
+                    });
+                    
+                    const result = await response.json();
+                    console.log(`${test.label} result:`, result);
+                    
+                    if (result.imageUrl && result.imageUrl.startsWith('data:image/svg+xml')) {
+                        resultDiv.className = 'test-result success';
+                        resultDiv.innerHTML = `
+                            <h3>✅ ${test.label} - SUCCESS</h3>
+                            <p><strong>Source:</strong> ${result.source}</p>
+                            <p><strong>SVG Data URL:</strong> ${result.imageUrl.substring(0, 100)}...</p>
+                            <img src="${result.imageUrl}" alt="${test.label}">
+                        `;
+                    } else {
+                        resultDiv.className = 'test-result error';
+                        resultDiv.innerHTML = `
+                            <h3>❌ ${test.label} - NOT SVG</h3>
+                            <p><strong>Source:</strong> ${result.source || 'unknown'}</p>
+                            <p><strong>Image URL:</strong> ${result.imageUrl || 'none'}</p>
+                            <p><strong>Error:</strong> ${result.error || 'Got photo instead of SVG'}</p>
+                            ${result.imageUrl ? `<img src="${result.imageUrl}" alt="${test.label}">` : ''}
+                            <pre>${JSON.stringify(result, null, 2)}</pre>
+                        `;
+                    }
+                } catch (error) {
+                    console.error(`${test.label} failed:`, error);
+                    resultDiv.className = 'test-result error';
+                    resultDiv.innerHTML = `
+                        <h3>❌ ${test.label} - ERROR</h3>
+                        <p><strong>Error:</strong> ${error.message}</p>
+                    `;
+                }
+            }
+        }
+        
+        // Run tests when page loads
+        testSVGGeneration();
+    </script>
+</body>
+</html>
