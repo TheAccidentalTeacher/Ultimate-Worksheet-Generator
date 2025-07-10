@@ -35,7 +35,6 @@ export class ContentGenerator {
       });
       worksheetContent = completion.choices[0]?.message?.content;
       console.log('[GENERATOR] OpenAI response received, length:', worksheetContent?.length || 0);
-      console.log('[GENERATOR] OpenAI response preview:', worksheetContent?.substring(0, 200) + '...');
       this.progressCallback(40, 'Processing worksheet structure...');
     } catch (err: any) {
       console.error('[GENERATOR] OpenAI API error:', err);
@@ -71,23 +70,12 @@ export class ContentGenerator {
       this.progressCallback(100, 'Error: Invalid JSON from LLM');
       throw new Error('Invalid JSON from LLM');
     }
-    this.progressCallback(50, 'Planning visual assets...');
-    // Step 4: Skip visual asset selection for now to avoid API conflicts
-    // Worksheets will work without images, and we can add image support later if needed
-    if (worksheet && worksheet.visualAssets && Array.isArray(worksheet.visualAssets)) {
-      console.log('[GENERATOR] Skipping visual asset generation to avoid API conflicts');
-      // Just mark assets as placeholders
-      for (let i = 0; i < worksheet.visualAssets.length; i++) {
-        const asset = worksheet.visualAssets[i];
-        asset.imageUrl = '';
-        asset.source = 'Placeholder';
-      }
-    }
+    
+    // Skip all image processing - just return the worksheet
     this.progressCallback(90, 'Formatting final worksheet...');
     await this.sleep(300);
     this.progressCallback(100, 'Worksheet ready!');
     return worksheet;
-  
   }
 
   buildPrompt(userSelections: import('./types').UserSelections) {

@@ -32,7 +32,7 @@ export default function DashboardPage() {
   const [selectedTopic, setSelectedTopic] = useState('');
   const [selectedColoringTheme, setSelectedColoringTheme] = useState('');
   const [selectedColoringAge, setSelectedColoringAge] = useState('');
-  const [numProblems, setNumProblems] = useState(10);
+  const [numProblems, setNumProblems] = useState(1);
   const [scaffolding, setScaffolding] = useState('none');
   const [differentiation, setDifferentiation] = useState('standard');
   const [christianContent, setChristianContent] = useState(2);
@@ -301,7 +301,7 @@ export default function DashboardPage() {
                   <div className="flex items-center space-x-4">
                     <input
                       type="range"
-                      min="5"
+                      min="1"
                       max="50"
                       value={numProblems}
                       onChange={(e) => setNumProblems(Number(e.target.value))}
