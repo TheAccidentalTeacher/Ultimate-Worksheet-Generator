@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Live API Test - work-gen.netlify.app</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; max-width: 800px; }
+        .test { margin: 20px 0; padding: 15px; border: 2px solid #ccc; }
+        .success { border-color: green; background: #f0fff0; }
+        .error { border-color: red; background: #fff0f0; }
+        .warning { border-color: orange; background: #fff8e1; }
+        button { padding: 10px 20px; margin: 10px; font-size: 16px; cursor: pointer; }
+        pre { background: #f5f5f5; padding: 10px; overflow: auto; font-size: 12px; }
+        img { max-width: 300px; border: 2px solid black; }
+    </style>
+</head>
+<body>
+    <h1>🔍 Live API Tests - work-gen.netlify.app</h1>
+    
+    <button onclick="testHealthCheck()">Test Health Check</button>
+    <button onclick="testSVGGeneration()">Test SVG Generation</button>
+    <button onclick="testWorksheetGeneration()">Test Worksheet Generation</button>
+    
+    <div id="results"></div>
+    
+    <script>
+        function addResult(title, content, type = 'test') {
+            const results = document.getElementById('results');
+            const div = document.createElement('div');
+            div.className = `test ${type}`;
+            div.innerHTML = `<h3>${title}</h3>${content}`;
+            results.appendChild(div);
+            return div;
+        }
+        
+        async function testHealthCheck() {
+            const result = addResult('Health Check', 'Testing...');
+            try {
+                const response = await fetch('/api/health-check');
+                const data = await response.text();
+                result.className = 'test success';
+                result.innerHTML = `<h3>✅ Health Check</h3><pre>${data}</pre>`;
+            } catch (error) {
+                result.className = 'test error';
+                result.innerHTML = `<h3>❌ Health Check Failed</h3><p>${error.message}</p>`;
+            }
+        }
+        
+        async function testSVGGeneration() {
+            const result = addResult('SVG Generation', 'Testing coloring page API...');
+            try {
+                const response = await fetch('/api/generate-coloring-image', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        prompt: 'simple lion for coloring',
+                        preferDalle: false,
+                        subject: 'animals',
+                        grade: 'elementary',
+                        worksheetType: 'coloring page'
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                console.log('SVG API Response:', data);
+                
+                if (data.imageUrl && data.imageUrl.startsWith('data:image/svg+xml')) {
+                    result.className = 'test success';
+                    result.innerHTML = `
+                        <h3>✅ SVG Generation Working!</h3>
+                        <p><strong>Source:</strong> ${data.source}</p>
+                        <p><strong>Image Type:</strong> SVG Data URL</p>
+                        <img src="${data.imageUrl}" alt="Generated SVG">
+                    `;
+                } else {
+                    result.className = 'test error';
+                    result.innerHTML = `
+                        <h3>❌ SVG Generation Broken</h3>
+                        <p><strong>Source:</strong> ${data.source || 'unknown'}</p>
+                        <p><strong>Image URL:</strong> ${data.imageUrl ? data.imageUrl.substring(0, 100) + '...' : 'none'}</p>
+                        <p><strong>Error:</strong> ${data.error || 'Not returning SVG'}</p>
+                        ${data.imageUrl ? `<img src="${data.imageUrl}" alt="Wrong result">` : ''}
+                        <details><summary>Full Response</summary><pre>${JSON.stringify(data, null, 2)}</pre></details>
+                    `;
+                }
+            } catch (error) {
+                result.className = 'test error';
+                result.innerHTML = `<h3>❌ SVG API Error</h3><p>${error.message}</p>`;
+            }
+        }
+        
+        async function testWorksheetGeneration() {
+            const result = addResult('Worksheet Generation', 'Testing worksheet API...');
+            try {
+                const response = await fetch('/api/generate-worksheet', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        grade: '3rd',
+                        subject: 'Math',
+                        topic: 'Addition',
+                        numProblems: 3,
+                        scaffolding: 'standard',
+                        differentiation: 'standard',
+                        christianContent: 2,
+                        worksheetStyle: 'engaging',
+                        timeEstimate: 'short'
+                    })
+                });
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`HTTP ${response.status}: ${errorText}`);
+                }
+                
+                const data = await response.json();
+                console.log('Worksheet API Response:', data);
+                
+                if (data.title && data.problems) {
+                    result.className = 'test success';
+                    result.innerHTML = `
+                        <h3>✅ Worksheet Generation Working!</h3>
+                        <p><strong>Title:</strong> ${data.title}</p>
+                        <p><strong>Problems:</strong> ${data.problems.length}</p>
+                        <p><strong>Grade:</strong> ${data.grade}</p>
+                        <p><strong>Subject:</strong> ${data.subject}</p>
+                    `;
+                } else {
+                    result.className = 'test warning';
+                    result.innerHTML = `
+                        <h3>⚠️ Worksheet Generation Issues</h3>
+                        <p><strong>Error:</strong> ${data.error || 'Unexpected response format'}</p>
+                        <details><summary>Full Response</summary><pre>${JSON.stringify(data, null, 2)}</pre></details>
+                    `;
+                }
+            } catch (error) {
+                result.className = 'test error';
+                result.innerHTML = `<h3>❌ Worksheet API Error</h3><p>${error.message}</p>`;
+            }
+        }
+    </script>
+</body>
+</html>
