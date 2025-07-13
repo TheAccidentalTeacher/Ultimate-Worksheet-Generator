@@ -278,23 +278,13 @@ export default function WorksheetGenerator({ customization }: WorksheetGenerator
               {progress === 0 && (
                 <button
                   onClick={() => {
-                    // Try to fetch the latest worksheet directly
-                    fetch('/api/generate-worksheet?jobId=ws-1752428924934-t9t6a0cf')
-                      .then(r => r.json())
-                      .then(data => {
-                        if (data.worksheet) {
-                          setResult(data.worksheet);
-                          setLoading(false);
-                        }
-                      })
-                      .catch(() => {
-                        setError('Unable to retrieve worksheet. Please try generating a new one.');
-                        setLoading(false);
-                      });
+                    setError('Generation appears stuck. Please try again with a fresh request.');
+                    setLoading(false);
+                    setProgress(0);
                   }}
                   className="mt-2 text-xs text-blue-600 hover:text-blue-800 underline"
                 >
-                  Retrieve latest result
+                  Cancel and try again
                 </button>
               )}
             </div>
