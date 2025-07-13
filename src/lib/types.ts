@@ -63,11 +63,15 @@ export interface UnsplashImage {
 
 export interface WikimediaImage {
   id: string;
-  url: string;
-  thumb?: string;
   title: string;
+  url: string;
+  thumbUrl?: string;
+  width?: number;
+  height?: number;
+  description?: string;
   license?: string;
-  author?: string;
+  attribution?: string;
+  pageUrl?: string;
 }
 
 export interface ColoringSheetPage {

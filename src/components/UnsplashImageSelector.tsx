@@ -21,7 +21,7 @@ export default function UnsplashImageSelector({ onSelect, label }: UnsplashImage
     setImages([]);
     try {
       const data = await searchUnsplashImages(query);
-      setImages(data.results || []);
+      setImages(data || []);
     } catch (err: any) {
       setError('Failed to fetch images.');
     } finally {
