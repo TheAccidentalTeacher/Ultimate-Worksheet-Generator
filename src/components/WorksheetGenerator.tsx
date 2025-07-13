@@ -112,6 +112,7 @@ export default function WorksheetGenerator({ customization }: WorksheetGenerator
       }, 60000); // 60 seconds timeout
       
       const eventSource = listenForProgress(jobId, (progress) => {
+        console.log('[WORKSHEET-GENERATOR] Progress update:', progress);
         setProgress(progress.percentage);
         if (progress.percentage === 100) {
           clearTimeout(timeout);
@@ -119,17 +120,30 @@ export default function WorksheetGenerator({ customization }: WorksheetGenerator
             setError(progress.message);
             setLoading(false);
           } else {
-            fetch(`/api/generate-worksheet?jobId=${encodeURIComponent(jobId)}`)
-              .then(r => r.json())
-              .then(data => {
-                setResult(data.worksheet);
-                setLoading(false);
-              })
-              .catch(err => {
-                console.error('Failed to fetch worksheet result:', err);
-                setError('Failed to retrieve worksheet. Please try again.');
-                setLoading(false);
-              });
+            // Add a small delay to ensure backend has finished processing
+            setTimeout(() => {
+              fetch(`/api/generate-worksheet?jobId=${encodeURIComponent(jobId)}`)
+                .then(r => {
+                  if (!r.ok) {
+                    throw new Error(`HTTP ${r.status}: Failed to retrieve worksheet`);
+                  }
+                  return r.json();
+                })
+                .then(data => {
+                  console.log('[WORKSHEET-GENERATOR] Retrieved worksheet:', data);
+                  if (data.worksheet) {
+                    setResult(data.worksheet);
+                    setLoading(false);
+                  } else {
+                    throw new Error('No worksheet data received');
+                  }
+                })
+                .catch(err => {
+                  console.error('Failed to fetch worksheet result:', err);
+                  setError('Failed to retrieve worksheet. Please try again.');
+                  setLoading(false);
+                });
+            }, 1000); // 1 second delay
           }
         }
       });
@@ -306,10 +320,29 @@ export default function WorksheetGenerator({ customization }: WorksheetGenerator
               setError('');
               setLoading(false);
               setProgress(0);
+              // Try to retrieve any recent worksheets
+              const recentJobIds = ['ws-1752428924934-t9t6a0cf', 'ws-1752428542533-h9r4heje'];
+              const tryRetrieveRecent = async () => {
+                for (const jobId of recentJobIds) {
+                  try {
+                    const response = await fetch(`/api/generate-worksheet?jobId=${jobId}`);
+                    if (response.ok) {
+                      const data = await response.json();
+                      if (data.worksheet) {
+                        setResult(data.worksheet);
+                        return;
+                      }
+                    }
+                  } catch (error) {
+                    console.log(`Failed to retrieve ${jobId}:`, error);
+                  }
+                }
+              };
+              tryRetrieveRecent();
             }}
             className="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors"
           >
-            Reset and Try Again
+            Reset and Try Again (or Retrieve Recent)
           </button>
         </div>
       )}
