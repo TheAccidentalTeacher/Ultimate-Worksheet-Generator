@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import WorksheetGenerator from '@/components/WorksheetGenerator';
 import ColoringSheetGenerator from '@/components/ColoringSheetGenerator';
+import MultiAPIStatusDashboard from '@/components/MultiAPIStatusDashboard';
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -189,6 +190,17 @@ export default function DashboardPage() {
               >
                 <span className="text-lg">🎨</span>
                 <span>Coloring Sheets</span>
+              </button>
+              <button
+                onClick={() => setActiveTab('api-status')}
+                className={`px-6 py-3 rounded-xl font-semibold transition-all flex items-center space-x-2 ${
+                  activeTab === 'api-status'
+                    ? 'bg-gradient-to-r from-blue-500 to-indigo-500 text-white shadow-lg'
+                    : 'text-gray-600 hover:text-blue-600 hover:bg-blue-50'
+                }`}
+              >
+                <Settings className="h-5 w-5" />
+                <span>API Status</span>
               </button>
             </div>
           </div>
