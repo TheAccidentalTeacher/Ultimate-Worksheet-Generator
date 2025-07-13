@@ -104,9 +104,17 @@ export default function WorksheetGenerator({ customization }: WorksheetGenerator
         throw new Error(errorMessage);
       }
       const { jobId } = await res.json();
-      listenForProgress(jobId, (progress) => {
+      
+      // Add timeout to prevent infinite loading
+      const timeout = setTimeout(() => {
+        setError('Generation is taking longer than expected. Please try again.');
+        setLoading(false);
+      }, 60000); // 60 seconds timeout
+      
+      const eventSource = listenForProgress(jobId, (progress) => {
         setProgress(progress.percentage);
         if (progress.percentage === 100) {
+          clearTimeout(timeout);
           if (progress.message.startsWith('Error')) {
             setError(progress.message);
             setLoading(false);
@@ -116,10 +124,23 @@ export default function WorksheetGenerator({ customization }: WorksheetGenerator
               .then(data => {
                 setResult(data.worksheet);
                 setLoading(false);
+              })
+              .catch(err => {
+                console.error('Failed to fetch worksheet result:', err);
+                setError('Failed to retrieve worksheet. Please try again.');
+                setLoading(false);
               });
           }
         }
       });
+      
+      // Cleanup on unmount
+      return () => {
+        clearTimeout(timeout);
+        if (eventSource) {
+          eventSource.close();
+        }
+      };
     } catch (err: any) {
       setError('Sorry, something went wrong while generating your worksheet. Please try again, check your internet connection, or contact support if the problem continues.');
       setLoading(false);
@@ -253,6 +274,29 @@ export default function WorksheetGenerator({ customization }: WorksheetGenerator
                    'Almost ready!'}
                 </span>
               </div>
+              {/* Debug button for stuck states */}
+              {progress === 0 && (
+                <button
+                  onClick={() => {
+                    // Try to fetch the latest worksheet directly
+                    fetch('/api/generate-worksheet?jobId=ws-1752428924934-t9t6a0cf')
+                      .then(r => r.json())
+                      .then(data => {
+                        if (data.worksheet) {
+                          setResult(data.worksheet);
+                          setLoading(false);
+                        }
+                      })
+                      .catch(() => {
+                        setError('Unable to retrieve worksheet. Please try generating a new one.');
+                        setLoading(false);
+                      });
+                  }}
+                  className="mt-2 text-xs text-blue-600 hover:text-blue-800 underline"
+                >
+                  Retrieve latest result
+                </button>
+              )}
             </div>
           )}
         </div>
@@ -260,11 +304,24 @@ export default function WorksheetGenerator({ customization }: WorksheetGenerator
 
       {/* Error Message */}
       {error && (
-        <APIErrorHandler 
-          error={error} 
-          service={error.includes('API key') ? 'openai' : 'general'} 
-          onRetry={() => generateWorksheet()}
-        />
+        <div className="space-y-4">
+          <APIErrorHandler 
+            error={error} 
+            service={error.includes('API key') ? 'openai' : 'general'} 
+            onRetry={() => generateWorksheet()}
+          />
+          {/* Manual refresh button for stuck loading states */}
+          <button
+            onClick={() => {
+              setError('');
+              setLoading(false);
+              setProgress(0);
+            }}
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors"
+          >
+            Reset and Try Again
+          </button>
+        </div>
       )}
 
       {/* Results */}
