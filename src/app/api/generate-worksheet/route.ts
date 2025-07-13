@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+import { EnhancedContentGenerator } from '../../../lib/EnhancedContentGenerator';
 import { ContentGenerator } from '../../../lib/ContentGenerator';
 
 // Use the same worksheetStorage as in progress-stream (in production, use Redis/pubsub)
@@ -35,9 +36,10 @@ export async function POST(req: NextRequest) {
 
 import type { UserSelections } from '../../../lib/types';
 async function startWorksheetJob(jobId: string, userSelections: UserSelections) {
-  console.log(`[JOB ${jobId}] Starting worksheet generation...`);
+  console.log(`[JOB ${jobId}] Starting enhanced worksheet generation...`);
   
-  const generator = new ContentGenerator({
+  // Use Enhanced Content Generator for intelligent API selection
+  const generator = new EnhancedContentGenerator({
     progressCallback: (percentage: number, message: string) => {
       console.log(`[JOB ${jobId}] Progress: ${percentage}% - ${message}`);
       // Store progress in memory (replace with Redis/pubsub in production)
