@@ -24,10 +24,15 @@ export default function MultiAPIStatusDashboard() {
     { name: 'Azure AI Foundry 2', key: 'AZURE_AI_FOUNDRY_KEY_2', status: 'inactive', category: 'content', usage: 3, icon: <Zap className="w-4 h-4" /> },
     
     // Visual APIs
+    // eslint-disable-next-line jsx-a11y/alt-text
     { name: 'Stability AI', key: 'STABILITY_AI_API_KEY', status: 'active', category: 'visual', usage: 45, icon: <Image className="w-4 h-4" /> },
+    // eslint-disable-next-line jsx-a11y/alt-text
     { name: 'Replicate', key: 'REPLICATE_API_TOKEN', status: 'active', category: 'visual', usage: 15, icon: <Image className="w-4 h-4" /> },
+    // eslint-disable-next-line jsx-a11y/alt-text
     { name: 'Unsplash', key: 'UNSPLASH_ACCESS_KEY', status: 'active', category: 'visual', usage: 78, icon: <Image className="w-4 h-4" /> },
+    // eslint-disable-next-line jsx-a11y/alt-text
     { name: 'Pexels', key: 'PEXELS_API_KEY', status: 'active', category: 'visual', usage: 34, icon: <Image className="w-4 h-4" /> },
+    // eslint-disable-next-line jsx-a11y/alt-text
     { name: 'Pixabay', key: 'PIXABAY_API_KEY', status: 'active', category: 'visual', usage: 22, icon: <Image className="w-4 h-4" /> },
     
     // Research APIs

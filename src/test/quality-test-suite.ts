@@ -97,8 +97,11 @@ class WorksheetQualityTester {
       console.log('=' .repeat(60));
       
       const result = await this.testWorksheetQuality(testCase.selections as UserSelections);
-      result.testName = testCase.name;
-      results.push(result);
+      const testResult = {
+        ...result,
+        testName: testCase.name
+      };
+      results.push(testResult);
       
       console.log(`✅ Quality Score: ${result.metrics.overall}/10`);
       console.log(`🎯 API Strategy: ${result.apiStrategy.primary} + ${result.apiStrategy.enhancement.length} enhancements`);
