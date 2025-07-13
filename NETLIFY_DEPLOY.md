@@ -20,13 +20,18 @@
 ### 🔐 Environment Variables Required
 Set these in Netlify Dashboard → Site Settings → Environment Variables:
 
-**Required:**
+**Required for Core Functionality:**
 - `OPENAI_API_KEY` - Get from https://platform.openai.com/api-keys
+- `STABILITY_AI_API_KEY` - Get from https://platform.stability.ai/ (backup for image generation)
 
 **Optional (for enhanced features):**
+- `REPLICATE_API_TOKEN` - For additional AI models
+- `AZURE_AI_FOUNDRY_KEY` - Azure AI services
+- `AZURE_AI_FOUNDRY_ENDPOINT` - Azure AI endpoint URL
 - `UNSPLASH_ACCESS_KEY` - For stock photos
-- `PIXABAY_API_KEY` - For additional images  
-- `REPLICATE_API_TOKEN` - For AI-generated coloring pages
+- `PIXABAY_API_KEY` - For additional images
+- `PEXELS_API_KEY` - For more stock photos
+- `GIPHY_API_KEY` - For animated content
 
 ## 🚀 Deployment Steps
 
