@@ -36,3 +36,6 @@ next-env.d.ts
 
 # Local Netlify folder
 .netlify
+
+# Private API keys file
+API_KEYS_PRIVATE.md

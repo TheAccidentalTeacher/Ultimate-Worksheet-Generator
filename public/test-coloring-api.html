@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Coloring Image API Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; max-width: 800px; margin: 0 auto; }
+        button { background: #4CAF50; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; margin: 10px 0; }
+        button:hover { background: #45a049; }
+        button:disabled { background: #cccccc; cursor: not-allowed; }
+        input, select { padding: 8px; margin: 5px; border: 1px solid #ddd; border-radius: 4px; width: 200px; }
+        .result { margin: 20px 0; padding: 20px; background: #f5f5f5; border-radius: 5px; }
+        .loading { color: #666; font-style: italic; }
+        .error { color: red; }
+        .success { color: green; }
+        img { max-width: 100%; height: auto; border: 2px solid #ddd; border-radius: 8px; margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <h1>🎨 Coloring Image API Test</h1>
+    <p>Test the working coloring image generation API with your OpenAI and Stability AI keys!</p>
+    
+    <div>
+        <label>Prompt:</label><br>
+        <input type="text" id="prompt" value="cute kitten playing with yarn" placeholder="Enter coloring page description">
+    </div>
+    
+    <div>
+        <label>Theme:</label><br>
+        <select id="theme">
+            <option value="animals">Animals</option>
+            <option value="nature">Nature</option>
+            <option value="fantasy">Fantasy</option>
+            <option value="vehicles">Vehicles</option>
+            <option value="food">Food</option>
+        </select>
+    </div>
+    
+    <div>
+        <label>Age Group:</label><br>
+        <select id="ageGroup">
+            <option value="preschool">Preschool (3-5)</option>
+            <option value="elementary">Elementary (6-10)</option>
+            <option value="middle school">Middle School (11-13)</option>
+            <option value="teen">Teen (14-17)</option>
+            <option value="adult">Adult</option>
+        </select>
+    </div>
+    
+    <button onclick="generateImage()" id="generateBtn">🖼️ Generate Coloring Page</button>
+    <button onclick="checkAPIStatus()" id="statusBtn">📊 Check API Status</button>
+    
+    <div id="result" class="result" style="display: none;"></div>
+
+    <script>
+        async function checkAPIStatus() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = '<div class="loading">Checking API status...</div>';
+            
+            try {
+                const response = await fetch('/api/generate-coloring-image');
+                const data = await response.json();
+                
+                resultDiv.innerHTML = `
+                    <div class="success">✅ API Status: ${data.status}</div>
+                    <div><strong>Available Services:</strong></div>
+                    <div>🤖 DALL-E: ${data.availableServices.dalleConfigured ? '✅ Configured' : '❌ Not configured'}</div>
+                    <div>🎨 Stability AI: ${data.availableServices.stabilityConfigured ? '✅ Configured' : '❌ Not configured'}</div>
+                `;
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="error">❌ Error: ${error.message}</div>`;
+            }
+        }
+        
+        async function generateImage() {
+            const prompt = document.getElementById('prompt').value;
+            const theme = document.getElementById('theme').value;
+            const ageGroup = document.getElementById('ageGroup').value;
+            const resultDiv = document.getElementById('result');
+            const generateBtn = document.getElementById('generateBtn');
+            
+            if (!prompt.trim()) {
+                alert('Please enter a prompt');
+                return;
+            }
+            
+            generateBtn.disabled = true;
+            generateBtn.textContent = '⏳ Generating...';
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = '<div class="loading">🎨 Creating your coloring page... This may take 10-15 seconds.</div>';
+            
+            try {
+                const response = await fetch('/api/generate-coloring-image', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        prompt,
+                        theme,
+                        ageGroup,
+                        style: 'coloring page'
+                    }),
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok && data.imageUrl) {
+                    resultDiv.innerHTML = `
+                        <div class="success">✅ Successfully generated with ${data.source || 'AI'}!</div>
+                        <div><strong>Generated Image:</strong></div>
+                        <img src="${data.imageUrl}" alt="Generated coloring page: ${prompt}" />
+                        <div><em>Prompt used: "${prompt}" (Theme: ${theme}, Age: ${ageGroup})</em></div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="error">❌ Error: ${data.error || 'Unknown error'}</div>
+                        ${data.details ? `<div>Details: ${data.details}</div>` : ''}
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="error">❌ Network Error: ${error.message}</div>`;
+            } finally {
+                generateBtn.disabled = false;
+                generateBtn.textContent = '🖼️ Generate Coloring Page';
+            }
+        }
+        
+        // Check API status on page load
+        window.onload = checkAPIStatus;
+    </script>
+</body>
+</html>
