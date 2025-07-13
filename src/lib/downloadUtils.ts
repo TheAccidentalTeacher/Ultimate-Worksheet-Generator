@@ -17,9 +17,24 @@ export interface WorksheetResult {
     christianConnection?: string;
     materials?: string;
   }>;
-  answerKey: string;
+  answerKey: string | {
+    solutions?: string;
+    teachingTips?: string;
+    commonMistakes?: string;
+    extensionActivities?: string;
+  };
   extensions?: string[];
   materials?: string[];
+  images?: Array<{
+    url: string;
+    description: string;
+    alt?: string;
+  }>;
+  visualElements?: Array<{
+    type: string;
+    url: string;
+    description: string;
+  }>;
   error?: string;
 }
 
@@ -282,27 +297,4 @@ export const downloadAsWord = (worksheet: WorksheetResult) => {
   URL.revokeObjectURL(url);
 };
 
-// Export types for use in components
-export interface WorksheetResult {
-  title: string;
-  grade: string;
-  subject: string;
-  topic: string;
-  description: string;
-  instructions: string;
-  estimatedTime: string;
-  problems: Array<{
-    id: number;
-    type: string;
-    question: string;
-    options?: string[];
-    answer: string;
-    explanation: string;
-    christianConnection?: string;
-    materials?: string;
-  }>;
-  answerKey: string;
-  extensions?: string[];
-  materials?: string[];
-  error?: string;
-}
+

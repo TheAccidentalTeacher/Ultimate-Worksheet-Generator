@@ -75,13 +75,19 @@ export default function WorksheetGenerator({ customization }: WorksheetGenerator
         scaffolding: customization.scaffolding || 'standard',
         differentiation: customization.differentiation || 'standard',
         timeEstimate: customization.timeEstimate || '30 minutes',
-        numProblems: customization.numProblems || 5
+        numProblems: customization.numProblems || 5,
+        // Enable visual generation for map-based content
+        generateVisuals: true,
+        includeImages: true,
+        visualStyle: 'educational-maps'
       } : {
         // Legacy support for prompt-only requests
         prompt: prompt.trim(),
         grade: '5th', // default
         subject: 'General',
-        topic: prompt.trim()
+        topic: prompt.trim(),
+        generateVisuals: true,
+        includeImages: true
       };
 
       console.log('[WORKSHEET-GENERATOR] Sending request:', requestData);
@@ -357,6 +363,44 @@ export default function WorksheetGenerator({ customization }: WorksheetGenerator
               </div>
             </div>
 
+            {/* Visual Elements & Images */}
+            {(result.images || result.visualElements) && (
+              <div className="mb-6">
+                <h4 className="text-lg font-semibold text-gray-900 mb-4">Visual Elements</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {result.images && result.images.map((img, index) => (
+                    <div key={index} className="border border-gray-200 rounded-lg overflow-hidden">
+                      <Image
+                        src={img.url}
+                        alt={img.alt || img.description}
+                        className="w-full h-48 object-cover"
+                        width={400}
+                        height={200}
+                      />
+                      <div className="p-3">
+                        <p className="text-sm text-gray-600">{img.description}</p>
+                      </div>
+                    </div>
+                  ))}
+                  {result.visualElements && result.visualElements.map((visual, index) => (
+                    <div key={index} className="border border-gray-200 rounded-lg overflow-hidden">
+                      <Image
+                        src={visual.url}
+                        alt={visual.description}
+                        className="w-full h-48 object-cover"
+                        width={400}
+                        height={200}
+                      />
+                      <div className="p-3">
+                        <p className="text-sm text-gray-600 font-medium">{visual.type}</p>
+                        <p className="text-sm text-gray-500">{visual.description}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Problems */}
             <div className="mb-6">
               <h4 className="text-lg font-semibold text-gray-900 mb-4">
@@ -449,7 +493,36 @@ export default function WorksheetGenerator({ customization }: WorksheetGenerator
             {result.answerKey && (
               <div className="mt-6 bg-blue-50 rounded-lg p-4">
                 <h4 className="text-lg font-semibold text-gray-900 mb-2">Teacher Notes</h4>
-                <p className="text-gray-700 break-words whitespace-pre-line">{result.answerKey}</p>
+                {typeof result.answerKey === 'string' ? (
+                  <p className="text-gray-700 break-words whitespace-pre-line">{result.answerKey}</p>
+                ) : (
+                  <div className="space-y-3">
+                    {result.answerKey.solutions && (
+                      <div>
+                        <h5 className="font-semibold text-gray-800">Solutions:</h5>
+                        <p className="text-gray-700 break-words whitespace-pre-line">{result.answerKey.solutions}</p>
+                      </div>
+                    )}
+                    {result.answerKey.teachingTips && (
+                      <div>
+                        <h5 className="font-semibold text-gray-800">Teaching Tips:</h5>
+                        <p className="text-gray-700 break-words whitespace-pre-line">{result.answerKey.teachingTips}</p>
+                      </div>
+                    )}
+                    {result.answerKey.commonMistakes && (
+                      <div>
+                        <h5 className="font-semibold text-gray-800">Common Mistakes:</h5>
+                        <p className="text-gray-700 break-words whitespace-pre-line">{result.answerKey.commonMistakes}</p>
+                      </div>
+                    )}
+                    {result.answerKey.extensionActivities && (
+                      <div>
+                        <h5 className="font-semibold text-gray-800">Extension Activities:</h5>
+                        <p className="text-gray-700 break-words whitespace-pre-line">{result.answerKey.extensionActivities}</p>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             )}
 
