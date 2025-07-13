@@ -18,8 +18,17 @@ export async function POST(req: NextRequest) {
     
     // Validate required fields
     if (!userSelections.grade || !userSelections.subject || !userSelections.topic) {
-      console.error('[API] Missing required fields:', { grade: userSelections.grade, subject: userSelections.subject, topic: userSelections.topic });
-      return NextResponse.json({ error: 'Missing required fields: grade, subject, topic' }, { status: 400 });
+      console.error('[API] Missing required fields:', { 
+        grade: userSelections.grade, 
+        subject: userSelections.subject, 
+        topic: userSelections.topic,
+        receivedFields: Object.keys(userSelections)
+      });
+      return NextResponse.json({ 
+        error: 'Missing required fields: grade, subject, topic',
+        received: Object.keys(userSelections),
+        details: { grade: !!userSelections.grade, subject: !!userSelections.subject, topic: !!userSelections.topic }
+      }, { status: 400 });
     }
 
     const jobId = `ws-${Date.now()}-${Math.random().toString(36).substring(2, 10)}`;

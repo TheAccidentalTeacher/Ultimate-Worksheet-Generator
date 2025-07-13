@@ -49,7 +49,15 @@ export default function WorksheetGenerator({ customization }: WorksheetGenerator
 
   async function generateWorksheet(e?: React.FormEvent) {
     if (e) e.preventDefault();
+    
+    // Check if we have either a prompt or customization data
     if (!prompt.trim() && !customization) return;
+    
+    // If we have customization, ensure required fields are present
+    if (customization && (!customization.grade || !customization.subject || !customization.topic)) {
+      setError('Please fill in all required fields: grade, subject, and topic.');
+      return;
+    }
 
     setLoading(true);
     setError('');
@@ -57,16 +65,38 @@ export default function WorksheetGenerator({ customization }: WorksheetGenerator
     setProgress(0);
 
     try {
-      const requestData = {
-        prompt,
-        ...customization
+      // Use customization data if available, otherwise create from prompt
+      const requestData = customization ? {
+        grade: customization.grade,
+        subject: customization.subject,
+        topic: customization.topic || prompt.trim(), // fallback to prompt for topic
+        worksheetStyle: customization.worksheetStyle || 'engaging',
+        christianContent: customization.christianContent?.toString() || '1',
+        scaffolding: customization.scaffolding || 'standard',
+        differentiation: customization.differentiation || 'standard',
+        timeEstimate: customization.timeEstimate || '30 minutes',
+        numProblems: customization.numProblems || 5
+      } : {
+        // Legacy support for prompt-only requests
+        prompt: prompt.trim(),
+        grade: '5th', // default
+        subject: 'General',
+        topic: prompt.trim()
       };
+
+      console.log('[WORKSHEET-GENERATOR] Sending request:', requestData);
+      
       const res = await fetch('/api/generate-worksheet', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(requestData),
       });
-      if (!res.ok) throw new Error('Failed to start worksheet generation');
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => null);
+        const errorMessage = errorData?.error || `HTTP ${res.status}: Failed to start worksheet generation`;
+        console.error('[WORKSHEET-GENERATOR] API Error:', errorMessage, errorData);
+        throw new Error(errorMessage);
+      }
       const { jobId } = await res.json();
       listenForProgress(jobId, (progress) => {
         setProgress(progress.percentage);
