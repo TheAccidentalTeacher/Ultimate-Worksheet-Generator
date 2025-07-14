@@ -294,30 +294,27 @@ export default function WorksheetGenerator({ customization }: WorksheetGenerator
       {/* Results */}
       {result && (
         <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-lg animate-fade-in min-w-0 max-w-full">
-          {/* Unsplash Image Selector for higher-level/stock images */}
-          <div className="mb-6">
-            <h4 className="text-lg font-semibold text-gray-900 mb-2 flex items-center gap-2">
-              Add a Stock Image (Unsplash)
-              <span className="text-xs text-gray-400" title="Use a real-world photo for history, science, ELA, or when a stock image is better than a generated one.">(info)</span>
-            </h4>
-            <UnsplashImageSelector onSelect={setSelectedImage} />
-            {selectedImage && (
-              <div className="mt-2">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                {/* Migrated to next/image for optimization */}
+          
+          {/* Show generated main image if available */}
+          {(result as any).mainImage && (
+            <div className="mb-6">
+              <h4 className="text-lg font-semibold text-gray-900 mb-2 flex items-center gap-2">
+                Generated Worksheet Image
+              </h4>
+              <div className="mb-4">
                 <Image
-                  src={selectedImage}
-                  alt="Selected Unsplash"
+                  src={(result as any).mainImage}
+                  alt="Generated worksheet illustration"
                   className="w-full max-h-64 object-contain rounded-xl border"
                   width={800}
                   height={400}
                   style={{ width: '100%', height: 'auto', maxHeight: '16rem', objectFit: 'contain', borderRadius: '0.75rem', border: '1px solid #e5e7eb' }}
-                  unoptimized={selectedImage.startsWith('data:')}
+                  unoptimized={(result as any).mainImage.startsWith('data:')}
                 />
-                <div className="text-xs text-gray-500 mt-1">This image will be included as a stock photo for your worksheet.</div>
+                <div className="text-xs text-gray-500 mt-1">Auto-generated image for your worksheet based on the topic and grade level.</div>
               </div>
-            )}
-          </div>
+            </div>
+          )}
           {/* Header */}
           <div className="bg-gradient-to-r from-amber-50 to-orange-50 p-6 border-b border-gray-200">
             <div className="flex items-center justify-between mb-4">

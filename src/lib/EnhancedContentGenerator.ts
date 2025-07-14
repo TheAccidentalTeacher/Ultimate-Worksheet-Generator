@@ -10,6 +10,7 @@ interface EnhancedWorksheet extends WorksheetResult {
   researchEnhancements?: any;
   apiStrategy?: any;
   enhancementSuggestions?: any[];
+  mainImage?: string;
 }
 
 export class EnhancedContentGenerator {
@@ -174,16 +175,35 @@ export class EnhancedContentGenerator {
     if (!apiStrategy.visual) return worksheet;
     
     try {
-      // Add visual suggestions to each problem
-      if (worksheet.problems) {
-        worksheet.problems = worksheet.problems.map((problem: WorksheetProblem, _index: number) => {
-          // Add visual enhancement suggestions
-          (problem as any).visualSuggestion = this.generateVisualSuggestion(problem, userSelections, apiStrategy.visual!);
-          return problem;
-        });
+      // Generate a main worksheet image based on the topic
+      const mainImagePrompt = this.generateMainWorksheetImagePrompt(userSelections);
+      console.log('[ENHANCED-GENERATOR] Generating main worksheet image with prompt:', mainImagePrompt);
+      
+      if (apiStrategy.visual === 'STABILITY_AI_API_KEY') {
+        try {
+          // Generate main image using DALL-E or Stability AI
+          const imageResponse = await fetch('/api/generate-coloring-image', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+              prompt: mainImagePrompt,
+              style: 'educational-illustration'
+            })
+          });
+          
+          if (imageResponse.ok) {
+            const imageData = await imageResponse.json();
+            if (imageData.imageUrl || imageData.image) {
+              worksheet.mainImage = imageData.imageUrl || imageData.image;
+              console.log('[ENHANCED-GENERATOR] Successfully generated main worksheet image');
+            }
+          }
+        } catch (imageErr) {
+          console.warn('[ENHANCED-GENERATOR] Image generation failed, continuing without:', imageErr);
+        }
       }
       
-      // Add overall visual theme
+      // Add visual theme information
       worksheet.visualTheme = this.generateVisualTheme(userSelections, apiStrategy.visual!);
       
     } catch (err) {
@@ -697,6 +717,14 @@ export class EnhancedContentGenerator {
     } else {
       return `Stock image search: ${this.generateStockImageQuery(problem, subject)}`;
     }
+  }
+
+  private generateMainWorksheetImagePrompt(userSelections: UserSelections): string {
+    const grade = userSelections.grade;
+    const subject = userSelections.subject;
+    const topic = userSelections.topic;
+    
+    return `Educational ${subject} illustration for ${grade} grade students, focused on ${topic}. Child-friendly, colorful, engaging artwork suitable for a worksheet header. Clean, professional style with educational elements. No text or words in the image.`;
   }
 
   private generateAIImagePrompt(problem: any, subject: string, grade: string): string {
