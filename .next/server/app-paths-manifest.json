@@ -11,7 +11,7 @@
   "/api/text-to-speech/route": "app/api/text-to-speech/route.js",
   "/health/page": "app/health/page.js",
   "/login/page": "app/login/page.js",
+  "/dashboard/page": "app/dashboard/page.js",
   "/signup/page": "app/signup/page.js",
-  "/page": "app/page.js",
-  "/dashboard/page": "app/dashboard/page.js"
+  "/page": "app/page.js"
 }
