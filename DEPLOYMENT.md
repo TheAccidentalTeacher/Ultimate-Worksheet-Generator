@@ -78,3 +78,4 @@ If you encounter issues:
 2. Verify environment variables are set
 3. Ensure your OpenAI account has sufficient credits
 4. Check that you're using a supported OpenAI model (gpt-4o is recommended)
+Environment variables deployed to Vercel - Mon Jul 14 03:44:45 UTC 2025
