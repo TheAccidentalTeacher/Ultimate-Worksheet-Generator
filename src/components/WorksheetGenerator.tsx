@@ -97,64 +97,24 @@ export default function WorksheetGenerator({ customization }: WorksheetGenerator
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(requestData),
       });
+      
       if (!res.ok) {
         const errorData = await res.json().catch(() => null);
-        const errorMessage = errorData?.error || `HTTP ${res.status}: Failed to start worksheet generation`;
+        const errorMessage = errorData?.error || `HTTP ${res.status}: Failed to generate worksheet`;
         console.error('[WORKSHEET-GENERATOR] API Error:', errorMessage, errorData);
         throw new Error(errorMessage);
       }
-      const { jobId } = await res.json();
       
-      // Add timeout to prevent infinite loading
-      const timeout = setTimeout(() => {
-        setError('Generation is taking longer than expected. Please try again.');
+      const data = await res.json();
+      console.log('[WORKSHEET-GENERATOR] Received response:', data);
+      
+      if (data.success && data.worksheet) {
+        setResult(data.worksheet);
+        setProgress(100);
         setLoading(false);
-      }, 60000); // 60 seconds timeout
-      
-      const eventSource = listenForProgress(jobId, (progress) => {
-        console.log('[WORKSHEET-GENERATOR] Progress update:', progress);
-        setProgress(progress.percentage);
-        if (progress.percentage === 100) {
-          clearTimeout(timeout);
-          if (progress.message.startsWith('Error')) {
-            setError(progress.message);
-            setLoading(false);
-          } else {
-            // Add a small delay to ensure backend has finished processing
-            setTimeout(() => {
-              fetch(`/api/generate-worksheet?jobId=${encodeURIComponent(jobId)}`)
-                .then(r => {
-                  if (!r.ok) {
-                    throw new Error(`HTTP ${r.status}: Failed to retrieve worksheet`);
-                  }
-                  return r.json();
-                })
-                .then(data => {
-                  console.log('[WORKSHEET-GENERATOR] Retrieved worksheet:', data);
-                  if (data.worksheet) {
-                    setResult(data.worksheet);
-                    setLoading(false);
-                  } else {
-                    throw new Error('No worksheet data received');
-                  }
-                })
-                .catch(err => {
-                  console.error('Failed to fetch worksheet result:', err);
-                  setError('Failed to retrieve worksheet. Please try again.');
-                  setLoading(false);
-                });
-            }, 1000); // 1 second delay
-          }
-        }
-      });
-      
-      // Cleanup on unmount
-      return () => {
-        clearTimeout(timeout);
-        if (eventSource) {
-          eventSource.close();
-        }
-      };
+      } else {
+        throw new Error(data.error || 'No worksheet data received');
+      }
     } catch (err: any) {
       setError('Sorry, something went wrong while generating your worksheet. Please try again, check your internet connection, or contact support if the problem continues.');
       setLoading(false);
