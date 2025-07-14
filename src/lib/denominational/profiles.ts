@@ -8,7 +8,7 @@ import {
 } from './types';
 
 // Comprehensive denominational profiles with theological distinctives
-export const DENOMINATIONAL_PROFILES: Record<Denomination, DenominationalProfile> = {
+export const DENOMINATIONAL_PROFILES: Partial<Record<Denomination, DenominationalProfile>> = {
   "Reformed": {
     denomination: "Reformed",
     theologicalEmphases: [

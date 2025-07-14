@@ -33,6 +33,18 @@ export class ContentAdaptationEngine {
     const baseRules: AdaptationRule[] = [];
     const profile = DENOMINATIONAL_PROFILES[denomination];
 
+    if (!profile) {
+      // Return default rules when profile is not available
+      return [
+        {
+          triggerKeywords: ["kindness", "honesty", "service"],
+          denominationalFocus: "General Christian values",
+          contentModification: "Emphasize character development",
+          level
+        }
+      ];
+    }
+
     switch (level) {
       case 0:
         // Secular content - no faith integration
@@ -56,7 +68,7 @@ export class ContentAdaptationEngine {
           },
           {
             triggerKeywords: ["stewardship", "responsibility", "community"],
-            denominationalFocus: profile.theologicalEmphases.join(", "),
+            denominationalFocus: profile?.theologicalEmphases.join(", ") || "Christian character development",
             contentModification: "Emphasize Christian character development",
             level: 1
           }
@@ -77,7 +89,7 @@ export class ContentAdaptationEngine {
             contentModification: "Reference biblical wisdom literature",
             level: 2
           },
-          ...profile.theologicalEmphases.map(emphasis => ({
+          ...profile?.theologicalEmphases.map(emphasis => ({
             triggerKeywords: [emphasis.toLowerCase()],
             denominationalFocus: emphasis,
             contentModification: `Incorporate ${emphasis} into content naturally`,
@@ -94,7 +106,7 @@ export class ContentAdaptationEngine {
             contentModification: "Include explicit denominational doctrine",
             level: 3
           },
-          ...profile.theologicalEmphases.map(emphasis => ({
+          ...profile?.theologicalEmphases.map(emphasis => ({
             triggerKeywords: [emphasis.toLowerCase(), "doctrine", "teaching"],
             denominationalFocus: emphasis,
             contentModification: `Explicitly teach ${emphasis} according to ${denomination} tradition`,
@@ -115,7 +127,7 @@ export class ContentAdaptationEngine {
     const filters: ContentFilter[] = [];
 
     // Add exclusion filters for avoided topics
-    profile.avoidedTopics.forEach(topic => {
+    profile?.avoidedTopics.forEach(topic => {
       filters.push({
         type: "exclude",
         pattern: topic.toLowerCase(),
@@ -200,16 +212,16 @@ export class ContentAdaptationEngine {
           "Integrate biblical themes and stories naturally into the educational content.",
           "Reference Scripture and Christian worldview where appropriate to the subject matter.",
           "Connect learning objectives to biblical principles and God's design.",
-          `Approach content from a ${denomination} perspective, emphasizing: ${profile.theologicalEmphases.slice(0, 3).join(", ")}`
+          `Approach content from a ${denomination} perspective, emphasizing: ${profile?.theologicalEmphases.slice(0, 3).join(", ")}`
         );
         break;
 
       case 3:
         prompts.push(
           `Create content explicitly reflecting ${denomination} doctrine and practice.`,
-          `Incorporate specific ${denomination} theological distinctives: ${profile.theologicalEmphases.join(", ")}`,
-          `Use preferred Bible translation: ${profile.preferredTranslations[0]}`,
-          `Follow ${denomination} educational approaches: ${profile.preferredApproaches.join(", ")}`
+          `Incorporate specific ${denomination} theological distinctives: ${profile?.theologicalEmphases.join(", ")}`,
+          `Use preferred Bible translation: ${profile?.preferredTranslations[0]}`,
+          `Follow ${denomination} educational approaches: ${profile?.preferredApproaches.join(", ")}`
         );
         break;
     }
@@ -217,8 +229,8 @@ export class ContentAdaptationEngine {
     // Add denomination-specific prompts
     if (level > 0 && request.denomination) {
       prompts.push(
-        `Consider ${denomination} cultural considerations: ${profile.culturalConsiderations.join(", ")}`,
-        `Avoid topics that conflict with ${denomination} beliefs: ${profile.avoidedTopics.join(", ")}`
+        `Consider ${denomination} cultural considerations: ${profile?.culturalConsiderations.join(", ")}`,
+        `Avoid topics that conflict with ${denomination} beliefs: ${profile?.avoidedTopics.join(", ")}`
       );
     }
 
@@ -271,7 +283,7 @@ export class ContentAdaptationEngine {
   static getContentGuidelines(level: ChristianContentLevel, denomination?: Denomination) {
     const denom = denomination || "General Christian";
     const profile = DENOMINATIONAL_PROFILES[denom];
-    return profile.contentGuidelines.find(guideline => guideline.level === level);
+    return profile?.contentGuidelines.find(guideline => guideline.level === level);
   }
 
   /**
@@ -287,7 +299,7 @@ export class ContentAdaptationEngine {
     const issues: string[] = [];
 
     // Check for avoided topics
-    profile.avoidedTopics.forEach(topic => {
+    profile?.avoidedTopics.forEach(topic => {
       const regex = new RegExp(topic, 'gi');
       if (regex.test(content)) {
         issues.push(`Content includes avoided topic: ${topic}`);
@@ -306,7 +318,7 @@ export class ContentAdaptationEngine {
 
       case 3:
         // Should include denominational distinctives
-        const hasDistinctives = profile.theologicalEmphases.some(emphasis => 
+        const hasDistinctives = profile?.theologicalEmphases.some(emphasis => 
           content.toLowerCase().includes(emphasis.toLowerCase())
         );
         if (!hasDistinctives) {
