@@ -33,7 +33,7 @@ export default function DashboardPage() {
   const [selectedTopic, setSelectedTopic] = useState('');
   const [selectedColoringTheme, setSelectedColoringTheme] = useState('');
   const [selectedColoringAge, setSelectedColoringAge] = useState('');
-  const [numProblems, setNumProblems] = useState(1);
+  const [numProblems, setNumProblems] = useState(5);
   const [scaffolding, setScaffolding] = useState('none');
   const [differentiation, setDifferentiation] = useState('standard');
   const [christianContent, setChristianContent] = useState(2);
