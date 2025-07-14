@@ -320,29 +320,13 @@ export default function WorksheetGenerator({ customization }: WorksheetGenerator
               setError('');
               setLoading(false);
               setProgress(0);
-              // Try to retrieve any recent worksheets
-              const recentJobIds = ['ws-1752428924934-t9t6a0cf', 'ws-1752428542533-h9r4heje'];
-              const tryRetrieveRecent = async () => {
-                for (const jobId of recentJobIds) {
-                  try {
-                    const response = await fetch(`/api/generate-worksheet?jobId=${jobId}`);
-                    if (response.ok) {
-                      const data = await response.json();
-                      if (data.worksheet) {
-                        setResult(data.worksheet);
-                        return;
-                      }
-                    }
-                  } catch (error) {
-                    console.log(`Failed to retrieve ${jobId}:`, error);
-                  }
-                }
-              };
-              tryRetrieveRecent();
+              // Clear any previous results when resetting
+              setResult(null);
+              console.log('[WORKSHEET-GENERATOR] Reset completed');
             }}
             className="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors"
           >
-            Reset and Try Again (or Retrieve Recent)
+            Reset and Try Again
           </button>
         </div>
       )}

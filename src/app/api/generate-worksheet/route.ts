@@ -96,7 +96,12 @@ export async function GET(req: NextRequest) {
   
   if (!worksheetStorage.has(jobId)) {
     console.error(`[API] Worksheet not found for job ID: ${jobId}`);
-    return NextResponse.json({ error: 'Worksheet not found' }, { status: 404 });
+    console.log(`[API] Available job IDs in storage:`, Array.from(worksheetStorage.keys()));
+    return NextResponse.json({ 
+      error: 'Worksheet not found. The worksheet may have expired or the job is still processing.',
+      jobId: jobId,
+      availableJobs: Array.from(worksheetStorage.keys()).length
+    }, { status: 404 });
   }
   
   const worksheet = worksheetStorage.get(jobId);
