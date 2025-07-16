@@ -1,0 +1,73 @@
+# 🌐 NETLIFY ENVIRONMENT VARIABLES
+# Copy these values into your Netlify site's Environment Variables section
+
+# ====================================================
+# 🔧 CORE FRONTEND CONFIGURATION
+# ====================================================
+
+# Backend API Connection - Points to your Railway backend
+VITE_API_BASE_URL=https://ultimate-worksheet-generator-production-f4a2.up.railway.app/api
+
+# Application Environment
+NODE_ENV=production
+
+# ====================================================
+# 🖼️ FRONTEND IMAGE SERVICES (Optional)
+# ====================================================
+# These APIs can be used directly from the frontend for image features
+
+# Unsplash - High-quality stock photos for worksheets
+VITE_UNSPLASH_ACCESS_KEY=yYnOwhd0dI9s1pkWyZ1MZB7hNj1-xvsNUBcm2YfJxKc
+
+# Pexels - Free stock photos and videos
+VITE_PEXELS_API_KEY=KiNAVfKn0jpQ0SpcFXWgo2h6WCRAmsQUDJ7BfLJ5Ad1cNiuHhRelQ5VY
+
+# Pixabay - Free images and vectors for educational content
+VITE_PIXABAY_API_KEY=51207676-35a50eca7b3766d7cbad972f7
+
+# Giphy - GIF search for engaging content
+VITE_GIPHY_API_KEY=EhZlSI8sczW25W7WSEbxddmJpdxxSkXY
+
+# ====================================================
+# 📰 FRONTEND CONTENT SERVICES (Optional)
+# ====================================================
+# These can be used for real-time content in worksheets
+
+# News API - Current events for topical worksheets
+VITE_NEWS_API_KEY=a594f4be04704110bfce8abdd9573ec5
+
+# YouTube Data API - Educational video integration
+VITE_YOUTUBE_API_KEY=AIzaSyDsCLOAeMylBh_uj7bfTKVf61dBLShzl1Y
+
+# ====================================================
+# 🔍 RESEARCH APIS (Optional)
+# ====================================================
+
+# SerpAPI - Google search for educational research
+VITE_SERPAPI_KEY=29fbeaa6bd6134ae0e2db143b59471724b1b111cda394df10d12180a19fe442c
+
+# ====================================================
+# 📝 NETLIFY DEPLOYMENT INSTRUCTIONS:
+# ====================================================
+# 1. Go to Netlify Dashboard
+# 2. Select your site
+# 3. Go to Site settings > Environment variables
+# 4. Add each variable name and value above
+# 5. Click "Save" 
+# 6. Go to Deploys tab
+# 7. Click "Trigger deploy" > "Deploy site"
+#
+# 🔑 ESSENTIAL VARIABLES (required):
+# - VITE_API_BASE_URL (points to Railway backend)
+# - NODE_ENV (production environment)
+#
+# 🌟 OPTIONAL VARIABLES (for enhanced features):
+# - Image APIs for worksheet illustrations
+# - Content APIs for dynamic worksheet content
+# - Research APIs for educational material lookup
+#
+# ⚠️ IMPORTANT NOTES:
+# - All frontend environment variables must start with VITE_
+# - Never put sensitive keys like OpenAI API key in frontend env vars
+# - The backend URL is already configured with your Railway deployment
+# - After adding variables, you MUST redeploy for changes to take effect

@@ -1,0 +1,112 @@
+# 🚀 RAILWAY ENVIRONMENT VARIABLES
+# Copy these values into your Railway project's Environment Variables section
+
+# ====================================================
+# 🔧 CORE APPLICATION SETTINGS
+# ====================================================
+NODE_ENV=production
+PORT=3000
+
+# 🌐 FRONTEND CORS CONFIGURATION
+# Updated with your actual Netlify URL
+FRONTEND_URL=https://work-gen.netlify.app
+
+# ====================================================
+# 🤖 PRIMARY AI SERVICES
+# ====================================================
+
+# OpenAI - Primary AI for worksheet generation
+OPENAI_API_KEY=your_openai_api_key_here
+
+# Azure AI Foundry - Multiple AI models in one service
+AZURE_AI_FOUNDRY_KEY=8adfl4ROr5U0nQ8adNiLBQV7FHqWbOrOvOiK4tSZGUcC8ms8Sc0JQQJ99BGACYeBjFXJ3w3AAAAACOGAD4f
+AZURE_AI_FOUNDRY_KEY_2=6ta2kMxsCg29dMrYHyXJ3XQwxSHuCAEvDyES08gZNnSQkvpw6c3u2JQJQQJ99BGACYeBjFXJ3w3AAAAACOG6b8Rq
+AZURE_AI_FOUNDRY_ENDPOINT=https://api-collection-ai-hub.services.ai.azure.com/
+
+# Replicate - Alternative AI models
+REPLICATE_API_TOKEN=your_replicate_api_token_here
+
+# Stability AI - Image generation and AI models
+STABILITY_AI_API_KEY=your_api_key_here
+
+# ====================================================
+# 🖼️ IMAGE & MEDIA SERVICES
+# ====================================================
+
+# Unsplash - High-quality stock photos
+UNSPLASH_ACCESS_KEY=yYnOwhd0dI9s1pkWyZ1MZB7hNj1-xvsNUBcm2YfJxKc
+UNSPLASH_SECRET_KEY=OIddKO-dRJAdAnpOPbrcW5h6OhM3WqxuY3KNNLle114
+
+# Pexels - Free stock photos and videos
+PEXELS_API_KEY=KiNAVfKn0jpQ0SpcFXWgo2h6WCRAmsQUDJ7BfLJ5Ad1cNiuHhRelQ5VY
+
+# Pixabay - Free images and vectors
+PIXABAY_API_KEY=51207676-35a50eca7b3766d7cbad972f7
+
+# Giphy - GIF search and integration
+GIPHY_API_KEY=EhZlSI8sczW25W7WSEbxddmJpdxxSkXY
+
+# ====================================================
+# 📰 CONTENT & DATA SERVICES
+# ====================================================
+
+# News API - Current events and news data
+NEWS_API_KEY=a594f4be04704110bfce8abdd9573ec5
+
+# YouTube Data API - Video content and metadata
+YOUTUBE_API_KEY=AIzaSyDsCLOAeMylBh_uj7bfTKVf61dBLShzl1Y
+
+# Reddit API - Social content and discussions
+REDDIT_CLIENT_ID=HDV7ht5bQREfFnFtXKhqKg
+REDDIT_CLIENT_SECRET=bcM2a3fap8jNtsD6F3hKcP3M1BUWxg
+
+# SerpAPI - Google search and academic research
+SERPAPI_KEY=29fbeaa6bd6134ae0e2db143b59471724b1b111cda394df10d12180a19fe442c
+
+# ====================================================
+# 🔒 SECURITY & AUTHENTICATION
+# ====================================================
+
+# JWT Secret for future authentication features
+JWT_SECRET=worksheet_generator_super_secret_key_2025_production
+
+# NextAuth Configuration (for future authentication features)
+NEXTAUTH_SECRET=worksheet_generator_super_secret_key_2025_production
+NEXTAUTH_URL=https://work-gen.netlify.app
+
+# Rate Limiting Configuration
+RATE_LIMIT_WINDOW_MS=900000
+RATE_LIMIT_MAX_REQUESTS=100
+
+# ====================================================
+# 📚 EDUCATIONAL & REFERENCE APIS
+# ====================================================
+
+# OpenClipart - Free educational graphics
+OPENCLIPART_BASE_URL=https://openclipart.org/search/json/
+
+# ====================================================
+# 🚀 DEPLOYMENT CONFIGURATION
+# ====================================================
+
+# Railway Static URL (will be auto-populated by Railway)
+RAILWAY_STATIC_URL=
+
+# ====================================================
+# 📝 INSTRUCTIONS FOR RAILWAY DEPLOYMENT:
+# ====================================================
+# 1. Go to your Railway project
+# 2. Click "Variables" tab
+# 3. Add each variable name and value above
+# 4. Update FRONTEND_URL with your actual Netlify URL
+# 5. Deploy your application
+#
+# 🔑 ESSENTIAL VARIABLES (minimum needed):
+# - OPENAI_API_KEY
+# - NODE_ENV
+# - FRONTEND_URL
+#
+# 🌟 ENHANCED FEATURES (optional but recommended):
+# - All image APIs for worksheet illustrations
+# - News/YouTube APIs for current content
+# - Research APIs for educational material

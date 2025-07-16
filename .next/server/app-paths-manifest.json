@@ -1,17 +1,1 @@
-{
-  "/api/analyze-image/route": "app/api/analyze-image/route.js",
-  "/api/generate-advanced/route": "app/api/generate-advanced/route.js",
-  "/api/generate-coloring-image/route": "app/api/generate-coloring-image/route.js",
-  "/api/generate-worksheet/route": "app/api/generate-worksheet/route.js",
-  "/api/health-check/route": "app/api/health-check/route.js",
-  "/_not-found/page": "app/_not-found/page.js",
-  "/api/progress-stream/route": "app/api/progress-stream/route.js",
-  "/api/scope-sequence/route": "app/api/scope-sequence/route.js",
-  "/api/speech-to-text/route": "app/api/speech-to-text/route.js",
-  "/api/text-to-speech/route": "app/api/text-to-speech/route.js",
-  "/dashboard/page": "app/dashboard/page.js",
-  "/health/page": "app/health/page.js",
-  "/login/page": "app/login/page.js",
-  "/signup/page": "app/signup/page.js",
-  "/page": "app/page.js"
-}
+{}
