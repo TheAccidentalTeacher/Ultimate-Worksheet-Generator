@@ -22,6 +22,14 @@ backend/.env
 backend/.env.local
 backend/.env.production
 
+# Private API Keys and Environment Files - NEVER COMMIT
+API_KEYS_PRIVATE.md
+**/API_KEYS_PRIVATE.md
+railway-environment-variables.txt
+netlify-environment-variables.txt
+**/railway-environment-variables.txt
+**/netlify-environment-variables.txt
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
